@@ -1,4 +1,4 @@
-import { Style } from '../config/defaultSetting'
+import type { Style } from '../config/defaultSetting'
 
 export interface Size {
   width: number
@@ -14,7 +14,7 @@ const getTextSize = (text: string, style: Required<Style>): Size => {
   ctx.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize}px/${style.lineHeight}px ${style.fontFamily}`
   const { width } = ctx.measureText(text)
   ctx.restore()
-  
+
   return {
     width: Math.ceil(width),
     height: style.lineHeight

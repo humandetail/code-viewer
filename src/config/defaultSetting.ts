@@ -1,4 +1,4 @@
-import { TupleToRecord } from '../types'
+import { type TupleToRecord } from '../types'
 
 export type BorderStyle = 'solid' | 'dashed' | 'dotted'
 
@@ -126,7 +126,7 @@ export const DEFAULT_THEME_OPTIONS = ((): ThemeOptions =>
   //   options[scope] = DEFAULT_STYLE
   //   return options
   // }, {} as Required<ThemeOptions>)
-  ({}) as ThemeOptions
+  ({})
 )()
 
 export const DEFAULT_CURSOR_STYLE: CursorStyle = {

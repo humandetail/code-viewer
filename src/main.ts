@@ -18,7 +18,6 @@ const a = hljs.highlight(code, {
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `<pre style="width: 160px; text-align: left; white-space: break-spaces">${a.value}</pre>`
 
-
 const cv = new CodeViewer({
   content: code,
   language,

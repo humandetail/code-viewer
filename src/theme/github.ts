@@ -1,6 +1,6 @@
-import { ThemeOptions } from '../config/defaultSetting'
+import type { ThemeOptions } from '../config/defaultSetting'
 
-export default {
+const theme: ThemeOptions = {
   doctag: { color: '#d73a49' },
   keyword: { color: '#d73a49' },
   'meta keyword': { color: '#d73a49' },
@@ -12,21 +12,21 @@ export default {
   'title.class': { color: '#6f42c1' },
   'title.class.inherited': { color: '#6f42c1' },
   'title.function': { color: '#6f42c1' },
-  attr: {color: '#005cc5'},
-  attribute: {color: '#005cc5'},
-  literal: {color: '#005cc5'},
-  meta: {color: '#005cc5'},
-  number: {color: '#005cc5'},
-  operator: {color: '#005cc5'},
-  'selector-attr': {color: '#005cc5'},
-  'selector-class': {color: '#005cc5'},
-  'selector-id': {color: '#005cc5'},
-  variable: {color: '#005cc5'},
+  attr: { color: '#005cc5' },
+  attribute: { color: '#005cc5' },
+  literal: { color: '#005cc5' },
+  meta: { color: '#005cc5' },
+  number: { color: '#005cc5' },
+  operator: { color: '#005cc5' },
+  'selector-attr': { color: '#005cc5' },
+  'selector-class': { color: '#005cc5' },
+  'selector-id': { color: '#005cc5' },
+  variable: { color: '#005cc5' },
   'meta string': { color: '#032f62' },
   regexp: { color: '#032f62' },
   string: { color: '#032f62' },
-  'built_in': { color: '#e36209' },
-  symbol: { color: '#e36209 '},
+  built_in: { color: '#e36209' },
+  symbol: { color: '#e36209 ' },
   code: { color: '#6a737d' },
   comment: { color: '#6a737d' },
   formula: { color: '#6a737d' },
@@ -38,7 +38,9 @@ export default {
   section: { color: '#005cc5;font-weight:700' },
   bullet: { color: '#735c0f' },
   emphasis: { color: '#24292e', fontStyle: 'italic' },
-  strong: { color: '#24292e', fontWeight:700 },
+  strong: { color: '#24292e', fontWeight: 700 },
   addition: { color: '#22863a', backgroundColor: '#f0fff4' },
-  deletion: { color: '#b31d28', backgroundColor: '#ffeef0' },
-} as ThemeOptions
+  deletion: { color: '#b31d28', backgroundColor: '#ffeef0' }
+}
+
+export default theme

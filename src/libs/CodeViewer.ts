@@ -3,9 +3,9 @@
  */
 
 import hljs from 'highlight.js'
-import { BorderStyle, DEFAULT_CURSOR_STYLE, DEFAULT_LINE_NUMBER_STYLE, DEFAULT_SELECT_STYLE, DEFAULT_STYLE, DEFAULT_THEME_OPTIONS, Style, ThemeOptions } from '../config/defaultSetting'
-import { LF_Regex, deepMergeObject, isAllTransparent, isAllZero, isEmptyObject, isString, splitLF } from '../utils/tools'
-import { Size, getMaxRenderIndex, getTextSize } from './Measure'
+import { type BorderStyle, DEFAULT_CURSOR_STYLE, DEFAULT_LINE_NUMBER_STYLE, DEFAULT_SELECT_STYLE, DEFAULT_STYLE, DEFAULT_THEME_OPTIONS, type Style, type ThemeOptions } from '../config/defaultSetting'
+import { LF_REGEX, deepMergeObject, isAllTransparent, isAllZero, isEmptyObject, isString, splitLF } from '../utils/tools'
+import { type Size, getMaxRenderIndex, getTextSize } from './Measure'
 
 export interface ViewerOptions {
   content?: string
@@ -28,7 +28,7 @@ export interface ViewerOptions {
 
 export interface ScopeData {
   scope: string
-  children: (string | ScopeData)[]
+  children: Array<string | ScopeData>
 }
 
 interface FlatData {
@@ -92,7 +92,7 @@ export default class CodeViewer {
     const {
       width,
       style: {
-        padding: [_, right]
+        padding: [, right]
       },
       breakRow
     } = this
@@ -124,8 +124,8 @@ export default class CodeViewer {
   #initCanvas (width?: number, height?: number) {
     const { canvas, ctx } = this
     const scale = window.devicePixelRatio || 1
-    const w = width || this.width
-    const h = height || this.height
+    const w = width ?? this.width
+    const h = height ?? this.height
 
     canvas.width = w * scale
     canvas.height = h * scale
@@ -186,18 +186,18 @@ export default class CodeViewer {
     if (!scope) {
       return style
     }
-      
+
     const fullScopeStyle = themes[scope] as Required<Style>
 
     if (scope.includes('.')) {
-      const s = scope.split('.').reduce((prev, key) => {
+      const s = scope.split('.').reduce<Style>((prev, key) => {
         const s = themes[key as keyof ThemeOptions] as Required<Style>
         if (s) {
           Object.assign(prev, s)
         }
 
         return prev
-      }, {} as Style)
+      }, {})
 
       if (!isEmptyObject(fullScopeStyle)) {
         Object.assign(s, fullScopeStyle)
@@ -227,7 +227,7 @@ export default class CodeViewer {
     this.mergeData(this.flatScopeDataList(scopeDataList))
   }
 
-  flatScopeDataList (scopeDataList: (string | ScopeData)[], scope?: string): FlatData[] {
+  flatScopeDataList (scopeDataList: Array<string | ScopeData>, scope?: string): FlatData[] {
     return scopeDataList.reduce((prev: FlatData[], item) => {
       return prev.concat(
         isString(item)
@@ -248,7 +248,7 @@ export default class CodeViewer {
     list.forEach(({ scope, content }) => {
       const currentStyle = this.getScopeStyle(scope as keyof ThemeOptions)
 
-      if (LF_Regex.test(content)) {
+      if (LF_REGEX.test(content)) {
         splitLF(content).forEach((item, index, sourceArr) => {
           children.push({
             scope,
@@ -351,7 +351,7 @@ export default class CodeViewer {
 
     this.drawBackground(style.backgroundColor, { width, height }, style.borderRadius)
 
-    const [top, _1, _2, left] = style.padding
+    const [top, , , left] = style.padding
 
     ctx.translate(left, top)
   }
@@ -366,7 +366,7 @@ export default class CodeViewer {
     } = this
 
     const {
-      padding: [_, right, _bottom],
+      padding: [, right],
       backgroundColor
     } = style
 
@@ -474,7 +474,7 @@ export default class CodeViewer {
         row.height += lineHeight
       } else {
         this.drawText(content, style)
-  
+
         ctx.translate(width, 0)
       }
     }
@@ -508,7 +508,7 @@ export default class CodeViewer {
         // padding-right
         (lineNumberStyle.padding.at(-1) ?? 0)
       ),
-      height,
+      height
     }
 
     this.drawBackground(lineNumberStyle.backgroundColor, size)
@@ -516,10 +516,10 @@ export default class CodeViewer {
 
     ctx.translate(
       // margin-left
-      (lineNumberStyle.margin.at(-1) ?? 0)
+      (lineNumberStyle.margin.at(-1) ?? 0) +
       // padding-left
-      + (lineNumberStyle.padding.at(-1) ?? 0)
-      + this.lineNumberWidth,
+      (lineNumberStyle.padding.at(-1) ?? 0) +
+      this.lineNumberWidth,
       0
     )
     ctx.textAlign = 'right'
@@ -530,7 +530,7 @@ export default class CodeViewer {
 
   drawText (text: string | number, style: Required<Style>) {
     const { ctx } = this
-    
+
     ctx.save()
     ctx.textBaseline = 'top'
     this.setCtxStyle(style)
@@ -561,8 +561,8 @@ export default class CodeViewer {
       ? Array(4).fill(borderColor) as [string, string, string, string]
       : borderColor
     const [topStyle, rightStyle, bottomStyle, leftStyle] = typeof borderStyle === 'string'
-    ? Array(4).fill(borderStyle) as [BorderStyle, BorderStyle, BorderStyle, BorderStyle]
-    : borderStyle
+      ? Array(4).fill(borderStyle) as [BorderStyle, BorderStyle, BorderStyle, BorderStyle]
+      : borderStyle
 
     this.drawLine([0, 0], [width, 0], topWidth, topStyle, topColor, borderRadius, 'top')
     this.drawLine([width - rightWidth / 2, 0], [width - rightWidth / 2, height], rightWidth, rightStyle, rightColor, borderRadius, 'right')
@@ -657,9 +657,9 @@ export default class CodeViewer {
     const parentElement = isString(el)
       ? document.querySelector<Element>(el)
       : el
-    
-    if (!parentElement || !('innerHTML' in parentElement)) {
-      throw new TypeError(`'el' expect a Element or a string, but got '${el}'`)
+
+    if ((parentElement == null) || !('innerHTML' in parentElement)) {
+      throw new TypeError(`'el' expect a Element or a string, but got '${typeof el}'`)
     }
 
     if (!this.width || !this.height) {
