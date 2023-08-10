@@ -1,3 +1,6 @@
+type CurryFunction<T> = (arg: T) => T | CurryFunction<T>
+type ComposeFunction = <T>(...funcs: ((arg: T) => T)[]) => (arg: T) => T
+
 export const LF_REGEX = /\n(?<=[^\\])/
 
 export const isObject = (val: unknown): val is object => {
@@ -49,4 +52,18 @@ export const isAllTransparent = (val: string | [string, string, string, string])
   return typeof val === 'string'
     ? val.toLowerCase() === 'transparent'
     : val.every(i => i.toLowerCase() === 'transparent')
+}
+
+export const compose: ComposeFunction = (...funcs) => (arg) => {
+  return funcs.reduceRight((acc, func) => func(acc), arg)
+}   
+
+export const toCurry = <T>(fn: (...args: T[]) => T, arity = fn.length): (arg: T) => T | CurryFunction<T> => {
+    return function curried(...args: T[]): T | CurryFunction<T> {
+        if (args.length >= arity) {
+            return fn(...args)
+        } else {
+            return (...nextArgs: T[]) => curried(...args.concat(nextArgs))
+        }
+    };
 }
