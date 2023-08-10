@@ -147,6 +147,6 @@ export const DEFAULT_LINE_NUMBER_STYLE: Required<Style> = {
   borderColor: '#c1c1c1',
   borderStyle: 'solid',
   borderRadius: 0,
-  padding: [0, DEFAULT_FONT_SIZE / 2, 0, DEFAULT_FONT_SIZE / 2],
-  margin: [0, DEFAULT_FONT_SIZE, 0, 0]
+  padding: [0, DEFAULT_PADDING / 2, 0, DEFAULT_PADDING / 2],
+  margin: [0, DEFAULT_PADDING, 0, 0]
 }
