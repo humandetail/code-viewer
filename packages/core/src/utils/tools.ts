@@ -1,5 +1,5 @@
 type CurryFunction<T> = (arg: T) => T | CurryFunction<T>
-type ComposeFunction = <T>(...funcs: ((arg: T) => T)[]) => (arg: T) => T
+type ComposeFunction = <T>(...funcs: Array<(arg: T) => T>) => (arg: T) => T
 
 export const LF_REGEX = /\n(?<=[^\\])/
 
@@ -56,14 +56,14 @@ export const isAllTransparent = (val: string | [string, string, string, string])
 
 export const compose: ComposeFunction = (...funcs) => (arg) => {
   return funcs.reduceRight((acc, func) => func(acc), arg)
-}   
+}
 
 export const toCurry = <T>(fn: (...args: T[]) => T, arity = fn.length): (arg: T) => T | CurryFunction<T> => {
-    return function curried(...args: T[]): T | CurryFunction<T> {
-        if (args.length >= arity) {
-            return fn(...args)
-        } else {
-            return (...nextArgs: T[]) => curried(...args.concat(nextArgs))
-        }
-    };
+  return function curried (...args: T[]): T | CurryFunction<T> {
+    if (args.length >= arity) {
+      return fn(...args)
+    } else {
+      return (...nextArgs: T[]) => curried(...args.concat(nextArgs))
+    }
+  }
 }
