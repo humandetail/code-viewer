@@ -8,6 +8,7 @@
     "dev:example": "pnpm --filter ./packages/example dev",
     "dev": "concurrently \"pnpm run dev:core\" \"pnpm run dev:example\"",
     "build": "pnpm --filter ./packages/core build",
+    "build:example": "pnpm --filter ./packages/example build",
     "release": "pnpm --filter ./packages/core release"
   },
   "devDependencies": {

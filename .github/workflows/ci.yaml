@@ -35,9 +35,9 @@ jobs:
         with:
           version: 7.13.4
       - name: Build Core
-        run: cd ./packages/core && pnpm install && pnpm run build
+        run: pwd && pnpm i && pnpm --filter ./packages/core i && pnpm run build
       - name: Build example
-        run: cd ./packages/core && pnpm install && pnpm run build
+        run: pwd && pnpm --filter ./packages/example i && pnpm run build:example
       - name: Setup Pages
         uses: actions/configure-pages@v2
       - name: Upload artifact
