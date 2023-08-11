@@ -1,8 +1,8 @@
-import { BorderStyle, LineNumberStyle, Style } from '../config/defaultSetting'
-import { Coordinate } from '../types'
+import { type BorderStyle, type LineNumberStyle, type Style } from '../config/defaultSetting'
+import { type Coordinate } from '../types'
 import { isAllTransparent, isAllZero } from '../utils/tools'
-import { Size } from './Measure'
-import { LineNumber, Row } from './Parser'
+import { type Size } from './Measure'
+import { type LineNumber, type Row } from './Parser'
 import { ScrollBarType } from './ScrollBar'
 
 export default class Renderer {
@@ -13,7 +13,7 @@ export default class Renderer {
   constructor (
     style: Required<Style>,
     public width: number = 0,
-    public height: number = 0,
+    public height: number = 0
   ) {
     const canvas = this.canvas = document.createElement('canvas')
     this.ctx = canvas.getContext('2d')!
@@ -111,7 +111,7 @@ export default class Renderer {
     const {
       style,
       width,
-      height,
+      height
     } = this
 
     this.save()
@@ -172,7 +172,7 @@ export default class Renderer {
     this.drawBackground(style.backgroundColor, { width, height })
     this.drawBorder({
       ...this.style,
-      borderColor: borderColor,
+      borderColor,
       borderWidth: [0, 1, 0, 0],
       borderStyle: 'solid',
       borderRadius: 0

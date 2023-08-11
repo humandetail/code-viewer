@@ -1,8 +1,8 @@
 import hljs from 'highlight.js'
-import { LineNumberStyle, Style, ThemeOptions } from '../config/defaultSetting'
-import { Size, getMaxRenderIndex, getTextSize } from './Measure'
+import { type LineNumberStyle, type Style, type ThemeOptions } from '../config/defaultSetting'
+import { type Size, getMaxRenderIndex, getTextSize } from './Measure'
 import { LF_REGEX, compose, isString, splitLF, toCurry } from '../utils/tools'
-import CodeViewer from './CodeViewer'
+import type CodeViewer from './CodeViewer'
 
 export interface ScopeData {
   scope: string
@@ -216,7 +216,7 @@ const mergeData = (
 
 export const parseContent = (
   content: string,
-  language = 'Plain text',
+  language = 'PlainText',
   breakRow: boolean,
   displayLineNumber: boolean,
   lineNumberStyle: Required<LineNumberStyle>,

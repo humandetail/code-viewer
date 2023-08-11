@@ -1,5 +1,5 @@
-import { DEFAULT_SCROLL_BAR_STYLE, ScrollBarStyle } from '../config/defaultSetting'
-import Renderer from './Renderer'
+import { DEFAULT_SCROLL_BAR_STYLE, type ScrollBarStyle } from '../config/defaultSetting'
+import type Renderer from './Renderer'
 
 export enum ScrollBarType {
   horizontal = 'horizontal',
@@ -17,7 +17,6 @@ export default class ScrollBar {
   renderer!: Renderer
 
   type: ScrollBarType = ScrollBarType.horizontal
-
 
   size = DEFAULT_SCROLL_BAR_STYLE.size
   borderColor = DEFAULT_SCROLL_BAR_STYLE.borderColor
@@ -43,7 +42,7 @@ export default class ScrollBar {
       ...(style ?? {}),
       type,
       actualLength,
-      // @todo Space of cross is left only if both bars are active 
+      // @todo Space of cross is left only if both bars are active
       visibleLength: visibleLength - (style?.size ?? 0),
       renderer
     })
@@ -101,7 +100,6 @@ export default class ScrollBar {
   hide () {}
 
   scroll (distance: number) {
-    
     const { maxScrollDistance } = this
     this.scrollDistance = Math.max(0, Math.min(maxScrollDistance, distance))
 

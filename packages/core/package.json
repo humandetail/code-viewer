@@ -1,0 +1,55 @@
+{
+  "name": "@humandetail/code-viewer",
+  "private": false,
+  "version": "0.0.1",
+  "keywords": [
+    "code",
+    "canvas",
+    "viewer",
+    "renderer",
+    "ui",
+    "vue",
+    "react"
+  ],
+  "description": "Display your code with Canvas Rendering.",
+  "type": "module",
+  "main": "dist/code-viewer.js",
+  "browser": "dist/code-viewer.js",
+  "module": "dist/code-viewer.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/code-viewer.js"
+    }
+  },
+  "files": [
+    "dist/*"
+  ],
+  "unpkg": "dist/code-viewer.js",
+  "jsdelivr": "dist/code-viewer.js",
+  "homepage": "https://github.com/humandetail/code-viewer",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/humandetail/code-viewer"
+  },
+  "bugs": {
+    "url": "https://github.com/humandetail/code-viewer/issues"
+  },
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "release": "release-it"
+  },
+  "devDependencies": {
+    "@release-it/conventional-changelog": "^5.1.1",
+    "release-it": "^15.10.3",
+    "typescript": "^5.0.4",
+    "vite": "^4.2.0",
+    "vite-plugin-dts": "^2.3.0"
+  },
+  "dependencies": {
+    "highlight.js": "^11.8.0"
+  }
+}

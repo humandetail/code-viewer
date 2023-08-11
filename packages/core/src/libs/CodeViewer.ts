@@ -5,9 +5,9 @@
 import { DEFAULT_CURSOR_STYLE, DEFAULT_LINE_NUMBER_STYLE, DEFAULT_SELECT_STYLE, DEFAULT_STYLE, DEFAULT_THEME_OPTIONS, type Style, type ThemeOptions } from '../config/defaultSetting'
 import { deepMergeObject, isEmptyObject, isString } from '../utils/tools'
 import Renderer from './Renderer'
-import { Row, parseContent } from './Parser'
+import { type Row, parseContent } from './Parser'
 import ScrollBar, { ScrollBarType } from './ScrollBar'
-import { Coordinate } from '../types'
+import { type Coordinate } from '../types'
 
 type Overflow = 'auto' | 'hidden' | 'scroll'
 export interface ViewerOptions {
@@ -95,7 +95,7 @@ export default class CodeViewer {
     return width - right
   }
 
-  #init () {
+  #init (initEvent = false) {
     const {
       breakRow,
       overflowX,
@@ -111,14 +111,11 @@ export default class CodeViewer {
     let newWidth = width
     let newHeight = height
 
-    const actualWidth = this.actualWidth = Math.max.apply(null, this.#rows.map(({ width }) => width))
-      + (right ?? 0)
-      + (left ?? 0)
+    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+    const actualWidth = this.actualWidth = Math.max.apply(null, this.#rows.map(({ width }) => width)) + (right ?? 0) + (left ?? 0)
 
-    const actualHeight = this.actualHeight = (this.#rows.at(-1)?.top ?? 0)
-      + (this.#rows.at(-1)?.height ?? 0)
-      + (top ?? 0)
-      + (bottom ?? 0)
+    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+    const actualHeight = this.actualHeight = (this.#rows.at(-1)?.top ?? 0) + (this.#rows.at(-1)?.height ?? 0) + (top ?? 0) + (bottom ?? 0)
 
     this.horizontalScrollBar = new ScrollBar(renderer, {
       type: ScrollBarType.horizontal,
@@ -131,7 +128,7 @@ export default class CodeViewer {
         thumbBackgroundColor: 'orange'
       }
     })
-    this.verticalScrollBar =  new ScrollBar(renderer, {
+    this.verticalScrollBar = new ScrollBar(renderer, {
       type: ScrollBarType.vertical,
       actualLength: actualHeight,
       visibleLength: height,
@@ -165,7 +162,9 @@ export default class CodeViewer {
       this.renderer.init(newWidth, newHeight)
     }
 
-    this.#initEvents()
+    if (initEvent) {
+      this.#initEvents()
+    }
   }
 
   #initEvents () {
@@ -214,8 +213,8 @@ export default class CodeViewer {
 
     const fullScopeStyle = themes[scope] as Required<Style>
 
-    if (scope.includes('.')) {
-      const s = scope.split('.').reduce<Style>((prev, key) => {
+    if ((scope as string).includes('.')) {
+      const s = (scope as string).split('.').reduce<Style>((prev, key) => {
         const s = themes[key as keyof ThemeOptions] as Required<Style>
         if (s) {
           Object.assign(prev, s)
@@ -246,6 +245,12 @@ export default class CodeViewer {
     }
 
     this.updateRows(content, language)
+    /** @todo */
+    this.#init(false)
+
+    this.horizontalScrollBar.scroll(0)
+    this.verticalScrollBar.scroll(0)
+    this.renderer.update(this.#rows, this.lineNumberStyle, { x: 0, y: 0 })
   }
 
   updateRows (content?: string, language?: string) {
