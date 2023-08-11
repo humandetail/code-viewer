@@ -35,16 +35,16 @@ jobs:
         with:
           version: 7.13.4
       - name: Build Core
-        run: pwd && npm i && npm run build
+        run: cd ./packages/core && pnpm install && pnpm run build
       - name: Build example
-        run: cd ./example && pnpm install && pnpm run build
+        run: cd ./packages/core && pnpm install && pnpm run build
       - name: Setup Pages
         uses: actions/configure-pages@v2
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
           # Upload entire repository
-          path: './example/dist'
+          path: './packages/example/dist'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v1
