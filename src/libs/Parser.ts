@@ -1,5 +1,5 @@
 import hljs from 'highlight.js'
-import { Style, ThemeOptions } from '../config/defaultSetting'
+import { LineNumberStyle, Style, ThemeOptions } from '../config/defaultSetting'
 import { Size, getMaxRenderIndex, getTextSize } from './Measure'
 import { LF_REGEX, compose, isString, splitLF, toCurry } from '../utils/tools'
 import CodeViewer from './CodeViewer'
@@ -54,27 +54,25 @@ const flatScopeDataList = (
 const parseRow = (
   breakRow: boolean,
   displayLineNumber: boolean,
-  lineNumberStyle: Required<Style>,
+  lineNumberStyle: Required<LineNumberStyle>,
   maxWidth: number,
   lineHeight: number,
   rows: Row[]
 ): Row[] => {
+  if (rows.length === 0) return rows
+
   let left = 0
   let top = 0
 
   const maxNumber = Math.max.apply(null, rows.map(({ lineNumber }) => lineNumber.value))
-  const { width } = getTextSize(`${maxNumber}`, lineNumberStyle)
+  const { width } = getTextSize(`${maxNumber}`, { ...rows[0].children[0].style })
   const lineNumberWidth = (
-    // margin-left
-    (lineNumberStyle.margin[1] ?? 0) +
     // padding-left
-    (lineNumberStyle.padding[1] ?? 0) +
+    (lineNumberStyle.padding ?? 0) +
     // max line number width
     width +
     // padding-right
-    (lineNumberStyle.padding.at(-1) ?? 0) +
-    // margin-right
-    (lineNumberStyle.margin.at(-1) ?? 0)
+    (lineNumberStyle.padding ?? 0)
   )
 
   return rows.map(row => {
@@ -132,20 +130,20 @@ const parseRow = (
     top += lineHeight
 
     const childrenWidth = children.reduce((acc, { size: { width } }) => acc + width, 0)
-
+    const rowLineNumberWidth = lineNumberWidth
     return {
       ...row,
       lineNumber: {
         ...row.lineNumber,
         display: displayLineNumber,
-        width: lineNumberWidth - (lineNumberStyle.margin[1] ?? 0) - (lineNumberStyle.margin[3] ?? 0),
+        width: rowLineNumberWidth,
         height: row.height,
         top: row.top,
         left: 0
       },
       width: breakRow
-        ? Math.min(maxWidth, childrenWidth)
-        : childrenWidth,
+        ? Math.min(maxWidth, childrenWidth + (displayLineNumber ? rowLineNumberWidth : 0))
+        : childrenWidth + (displayLineNumber ? rowLineNumberWidth : 0),
       children
     }
   })
@@ -221,7 +219,7 @@ export const parseContent = (
   language = 'Plain text',
   breakRow: boolean,
   displayLineNumber: boolean,
-  lineNumberStyle: Required<Style>,
+  lineNumberStyle: Required<LineNumberStyle>,
   maxWidth: number,
   lineHeight: number,
   getScopeStyle: CodeViewer['getScopeStyle']

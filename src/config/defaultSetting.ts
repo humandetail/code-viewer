@@ -27,6 +27,13 @@ export interface Style {
   margin?: [number, number, number, number]
 }
 
+export interface LineNumberStyle {
+  color?: string
+  borderColor?: string
+  borderFocusColor?: string
+  padding?: number
+}
+
 export interface CursorStyle {
   backgroundColor: string
   width: number
@@ -34,6 +41,13 @@ export interface CursorStyle {
 }
 
 export type ThemeOptions = TupleToRecord<typeof scopes, Style>
+
+export interface ScrollBarStyle {
+  size: number
+  borderColor: string
+  backgroundColor: string
+  thumbBackgroundColor: string
+}
 
 /**
  * Stylable Scopes
@@ -138,15 +152,24 @@ export const DEFAULT_SELECT_STYLE: Style = {
   backgroundColor: '#0088ff'
 }
 
-export const DEFAULT_LINE_NUMBER_STYLE: Required<Style> = {
-  ...DEFAULT_STYLE,
+export const DEFAULT_LINE_NUMBER_STYLE: Required<LineNumberStyle> = {
+  // ...DEFAULT_STYLE,
   color: '#a1a1a1',
-  fontSize: DEFAULT_FONT_SIZE - 2,
-  lineHeight: DEFAULT_LINE_HEIGHT,
-  borderWidth: [0, 1, 0, 0],
+  // fontSize: DEFAULT_FONT_SIZE - 2,
+  // lineHeight: DEFAULT_LINE_HEIGHT,
+  // borderWidth: [0, 1, 0, 0],
   borderColor: '#c1c1c1',
-  borderStyle: 'solid',
-  borderRadius: 0,
-  padding: [0, DEFAULT_PADDING / 2, 0, DEFAULT_PADDING / 2],
-  margin: [0, DEFAULT_PADDING, 0, 0]
+  borderFocusColor: '#c1c1c1',
+  // borderStyle: 'solid',
+  // borderRadius: 0,
+  // padding: [0, DEFAULT_PADDING / 2, 0, DEFAULT_PADDING / 2],
+  // margin: [0, DEFAULT_PADDING, 0, 0]
+  padding: DEFAULT_PADDING
+}
+
+export const DEFAULT_SCROLL_BAR_STYLE: Required<ScrollBarStyle> = {
+  size: 10,
+  borderColor: '#e1e1e1',
+  backgroundColor: 'rgba(225,225,225,.1)',
+  thumbBackgroundColor: 'pink'
 }

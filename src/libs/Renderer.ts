@@ -1,7 +1,9 @@
-import { BorderStyle, Style } from '../config/defaultSetting'
+import { BorderStyle, LineNumberStyle, Style } from '../config/defaultSetting'
+import { Coordinate } from '../types'
 import { isAllTransparent, isAllZero } from '../utils/tools'
 import { Size } from './Measure'
 import { LineNumber, Row } from './Parser'
+import { ScrollBarType } from './ScrollBar'
 
 export default class Renderer {
   canvas: HTMLCanvasElement
@@ -71,18 +73,38 @@ export default class Renderer {
     ctx.globalAlpha = Math.max(1, Math.min(0, opacity))
   }
 
-  render (rows: Row[], lineNumberStyle?: Required<Style>, breakRow?: boolean) {
+  update (rows: Row[], lineNumberStyle?: Required<LineNumberStyle>, coordinate: Coordinate = { x: 0, y: 0 }) {
+    this.clear()
+    this.render(rows, lineNumberStyle, coordinate)
+  }
+
+  render (rows: Row[], lineNumberStyle?: Required<LineNumberStyle>, coordinate: Coordinate = { x: 0, y: 0 }) {
     this.save()
 
     this.setCanvasStyle()
 
+    // render code
     rows.forEach(row => {
-      this.renderRow(row, lineNumberStyle)
+      this.renderRow(row, coordinate)
     })
 
     this.restore()
 
-    this.afterRender(!!breakRow)
+    // render line number
+    const { style: { padding } } = this
+    const paddingTop = padding[0] ?? 0
+
+    rows.forEach(({ lineNumber }) => {
+      if (lineNumber.display) {
+        if (!lineNumberStyle) {
+          throw new Error('If you want to display the line number, set the line number style.')
+        }
+        this.save()
+        this.translate(0, paddingTop - coordinate.y)
+        this.drawLineNumber(lineNumber, lineNumberStyle)
+        this.restore()
+      }
+    })
   }
 
   afterRender (breakRow: boolean) {
@@ -102,21 +124,14 @@ export default class Renderer {
     this.restore()
   }
 
-  renderRow (row: Row, lineNumberStyle?: Required<Style>) {
-    const { children, lineNumber, top } = row
-
-    if (lineNumber.display) {
-      if (!lineNumberStyle) {
-        throw new Error('If you want to display the line number, set the line number style.')
-      }
-      this.drawLineNumber(lineNumber, lineNumberStyle)
-    }
+  renderRow (row: Row, { x, y }: Coordinate = { x: 0, y: 0 }) {
+    const { children, top } = row
 
     this.save()
-    this.translate(0, top)
+    this.translate(0, top - y)
     children.forEach(child => {
       this.save()
-      this.translate(child.left, child.top)
+      this.translate(child.left - x, child.top)
       this.drawText(child.content, child.style)
       this.restore()
     })
@@ -146,23 +161,29 @@ export default class Renderer {
       top,
       left
     }: LineNumber,
-    style: Required<Style>
+    { borderColor, padding }: Required<LineNumberStyle>
   ) {
-    const { ctx } = this
+    const { ctx, style } = this
 
     this.save()
 
     this.translate(left, top)
 
     this.drawBackground(style.backgroundColor, { width, height })
-    this.drawBorder(style, { width, height })
+    this.drawBorder({
+      ...this.style,
+      borderColor: borderColor,
+      borderWidth: [0, 1, 0, 0],
+      borderStyle: 'solid',
+      borderRadius: 0
+    }, { width, height })
 
     ctx.translate(
-      width - (style.padding[1] ?? 0),
+      width - (padding ?? 0),
       0
     )
     ctx.textAlign = 'right'
-    this.drawText(value, style)
+    this.drawText(value, this.style)
 
     this.restore()
   }
@@ -292,6 +313,71 @@ export default class Renderer {
     ctx.restore()
   }
 
+  // ---------- start scroll bar -----------
+  drawScrollBar (
+    type: ScrollBarType,
+    size: number,
+    scrollDistance: number,
+    thumbLength: number,
+    visibleLength: number,
+    borderColor: string,
+    backgroundColor: string,
+    thumbBackgroundColor: string
+  ) {
+    const { ctx } = this
+
+    this.save()
+    ctx.fillStyle = backgroundColor
+    ctx.strokeStyle = borderColor
+
+    if (type === ScrollBarType.horizontal) {
+      this.drawHorizontalScrollBar(size, visibleLength, scrollDistance, thumbLength, thumbBackgroundColor)
+    } else {
+      this.drawVerticalScrollBar(size, visibleLength, scrollDistance, thumbLength, thumbBackgroundColor)
+    }
+
+    this.restore()
+  }
+
+  drawHorizontalScrollBar (
+    size: number,
+    visibleLength: number,
+    scrollDistance: number,
+    thumbLength: number,
+    thumbBackgroundColor: string
+  ) {
+    const { ctx, height } = this
+
+    this.translate(0, height - size)
+    // border
+    ctx.strokeRect(0, 0, visibleLength, size)
+    // background
+    ctx.fillRect(0, 0, visibleLength, size)
+    // thumb
+    ctx.fillStyle = thumbBackgroundColor
+    ctx.fillRect(scrollDistance, 0, thumbLength, size)
+  }
+
+  drawVerticalScrollBar (
+    size: number,
+    visibleLength: number,
+    scrollDistance: number,
+    thumbLength: number,
+    thumbBackgroundColor: string
+  ) {
+    const { ctx, width } = this
+
+    this.translate(width - size, 0)
+    // border
+    ctx.strokeRect(0, 0, size, visibleLength)
+    // background
+    ctx.fillRect(0, 0, size, visibleLength)
+    // thumb
+    ctx.fillStyle = thumbBackgroundColor
+    ctx.fillRect(0, scrollDistance, size, thumbLength)
+  }
+  // ---------- end scroll bar -----------
+
   translate (x: number, y: number) {
     this.ctx.translate(x, y)
   }
@@ -302,5 +388,9 @@ export default class Renderer {
 
   restore () {
     this.ctx.restore()
+  }
+
+  clear () {
+    this.ctx.clearRect(0, 0, this.width, this.height)
   }
 }
