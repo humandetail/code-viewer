@@ -16,10 +16,10 @@
   "main": "dist/code-viewer.js",
   "browser": "dist/code-viewer.js",
   "module": "dist/code-viewer.js",
-  "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/code-viewer.js"
+      "import": "./dist/code-viewer.js",
+      "types": "./dist/index.d.ts"
     }
   },
   "files": [
