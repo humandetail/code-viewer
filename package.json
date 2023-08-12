@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev:core": "pnpm --filter ./packages/core build --watch",
+    "dev:core": "pnpm --filter ./packages/core build:dev --watch",
     "dev:example": "pnpm --filter ./packages/example dev",
     "dev": "concurrently \"pnpm run dev:core\" \"pnpm run dev:example\"",
     "build": "pnpm --filter ./packages/core build",

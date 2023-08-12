@@ -8,6 +8,7 @@ import Renderer from './Renderer'
 import { type Row, parseContent } from './Parser'
 import ScrollBar, { ScrollBarType } from './ScrollBar'
 import { type Coordinate } from '../types'
+import githubThemes from '../theme/github'
 
 type Overflow = 'auto' | 'hidden' | 'scroll'
 export interface ViewerOptions {
@@ -33,6 +34,8 @@ export interface ViewerOptions {
 
 export default class CodeViewer {
   renderer: Renderer
+  content = ''
+  language = 'plainText'
 
   width = 0
   height = 0
@@ -65,12 +68,12 @@ export default class CodeViewer {
   horizontalScrollBar!: ScrollBar
   verticalScrollBar!: ScrollBar
 
-  constructor ({ content, language, ...options }: ViewerOptions = {}, themes: ThemeOptions = {}) {
+  constructor (options: ViewerOptions = {}, themes: ThemeOptions = githubThemes) {
     deepMergeObject(this, options)
 
     this.setThemes(themes)
 
-    this.updateRows(content, language)
+    this.updateRows()
 
     this.renderer = new Renderer(
       this.style,
@@ -244,17 +247,29 @@ export default class CodeViewer {
       throw new Error('Make sure the `mount()` method is called first.')
     }
 
-    this.updateRows(content, language)
+    if (content) {
+      this.content = content
+    }
+    if (language) {
+      this.language = language
+    }
+
+    this.updateRows()
     /** @todo */
     this.#init(false)
 
+    const {
+      renderer,
+      lineNumberStyle
+    } = this
+
     this.horizontalScrollBar.scroll(0)
     this.verticalScrollBar.scroll(0)
-    this.renderer.update(this.#rows, this.lineNumberStyle, { x: 0, y: 0 })
+    renderer.update(this.#rows, lineNumberStyle, { x: 0, y: 0 })
   }
 
-  updateRows (content?: string, language?: string) {
-    if (content) {
+  updateRows () {
+    if (this.content) {
       const {
         width,
         style: {
@@ -263,8 +278,16 @@ export default class CodeViewer {
         },
         breakRow,
         displayLineNumber,
-        lineNumberStyle
+        lineNumberStyle,
+        content,
+        language
       } = this
+
+      if (!width) {
+        this.#rows = []
+        return
+      }
+
       this.#rows = parseContent(
         content,
         language,
@@ -361,6 +384,14 @@ export default class CodeViewer {
       const { width, height } = parentElement.getBoundingClientRect()
 
       renderer.init(width, height)
+
+      this.width = width
+      this.height = height
+    }
+
+    // try parse content again
+    if (this.#rows.length === 0 && this.content) {
+      this.updateRows()
     }
 
     parentElement.appendChild(renderer.canvas)

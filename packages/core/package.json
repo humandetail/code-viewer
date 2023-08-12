@@ -39,6 +39,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:dev": "pnpm run build --mode development",
     "preview": "vite preview",
     "release": "release-it"
   },
