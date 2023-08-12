@@ -15,15 +15,12 @@
           </option>
         </select>
       </p>
-      <p>
-        <label for="J_code">Code:&emsp;</label>
-        <textarea v-model="code" style="width: 800px; height: 200px;"></textarea>
-      </p>
 
-      <p>
-        <button @click="handleBtnClick">Render</button>
-      </p>
+      <p for="J_code">Code:</p>
+      <textarea v-model="code" style="width: 800px; height: 200px;" @input="onInputDelayRender"></textarea>
     </div>
+
+    <p>Rendered:</p>
     <div ref="containerRef"></div>
   </div>
 </template>
@@ -59,8 +56,17 @@ onMounted(() => {
   cv.render()
 })
 
-const handleBtnClick = () => {
-  cv.update(code.value, lang.value)
-}
+let delayRenderTimeoutId: number
+const onInputDelayRender = (() => {
+  clearTimeout(delayRenderTimeoutId)
+
+  delayRenderTimeoutId = window.setTimeout(() => {
+    try {
+      cv.update(code.value, lang.value)
+    } catch (err) {
+      console.error(err)
+    }
+  }, 500)
+})
 
 </script>
