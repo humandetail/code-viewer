@@ -1,5 +1,12 @@
 
 
+## [0.1.3](https://github.com/humandetail/code-viewer/compare/@humandetail/code-viewer-0.1.2...${npm.name}-0.1.3) (2023-08-12)
+
+
+### Bug Fixes
+
+* no width causes an infinite loop ([552c0c1](https://github.com/humandetail/code-viewer/commit/552c0c1de79a2bd0a53a31591e6d6b52f3bfa25c))
+
 ## [0.1.2](https://github.com/humandetail/code-viewer/compare/@humandetail/code-viewer-0.1.1...${npm.name}-0.1.2) (2023-08-12)
 
 ## [0.1.1](https://github.com/humandetail/code-viewer/compare/@humandetail/code-viewer-0.1.0...${npm.name}-0.1.1) (2023-08-12)
