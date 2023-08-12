@@ -49,6 +49,9 @@
     "vite": "^4.2.0",
     "vite-plugin-dts": "^2.3.0"
   },
+  "dependencies": {
+    "highlight.js": "^11.8.0"
+  },
   "peerDependencies": {
     "highlight.js": "^11.8.0"
   }
