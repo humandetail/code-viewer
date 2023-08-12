@@ -35,7 +35,7 @@ jobs:
         with:
           version: 7.13.4
       - name: Build Core
-        run: pwd && pnpm i && pnpm --filter ./packages/core i && pnpm run build
+        run: pwd && pnpm i && pnpm --filter ./packages/core i -- no-frozen-lockfile && pnpm run build
       - name: Build example
         run: pwd && pnpm --filter ./packages/example i && pnpm run build:example
       - name: Setup Pages

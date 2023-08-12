@@ -14,6 +14,9 @@ export default defineConfig({
       fileName: 'code-viewer',
       formats: ['es', 'iife']
     },
-    sourcemap: true
+    sourcemap: false,
+    rollupOptions: {
+      external: ['highlight.js']
+    }
   }
 })

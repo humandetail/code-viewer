@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@humandetail/code-viewer": "*",
+    "@humandetail/code-viewer": "workspace:*",
     "vue": "^3.3.4"
   },
   "devDependencies": {
