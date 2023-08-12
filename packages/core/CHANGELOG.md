@@ -1,5 +1,7 @@
 
 
+## [0.1.1](https://github.com/humandetail/code-viewer/compare/@humandetail/code-viewer-0.1.0...${npm.name}-0.1.1) (2023-08-12)
+
 # 0.1.0 (2023-08-12)
 
 
