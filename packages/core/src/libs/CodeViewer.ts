@@ -2,13 +2,13 @@
  * Code Renderer
  */
 
-import { DEFAULT_CURSOR_STYLE, DEFAULT_HEADER_BAR, DEFAULT_LINE_NUMBER_STYLE, DEFAULT_SELECT_STYLE, DEFAULT_STYLE, DEFAULT_THEME_OPTIONS, type Style, type ThemeOptions } from '../config/defaultSetting'
+import { DEFAULT_HEADER_BAR, DEFAULT_LINE_NUMBER_STYLE, DEFAULT_SELECT_STYLE, DEFAULT_STYLE, DEFAULT_SCOPE_STYLES, type Style, type ScopeStyles, DEFAULT_HEADER_BAR_DARK } from '../config/defaultSetting'
 import { deepMergeObject, getMouseCoordinate, isEmptyObject, isString } from '../utils/tools'
 import Renderer from './Renderer'
 import { type Row, parseContent } from './Parser'
 import ScrollBar, { ScrollBarType } from './ScrollBar'
 import { type Coordinate } from '../types'
-import githubThemes from '../theme/github'
+import { type CodeViewerTheme, lightTheme, darkTheme } from '../themes'
 
 type Overflow = 'auto' | 'hidden' | 'scroll'
 
@@ -19,11 +19,8 @@ export interface ViewerOptions {
 
   width?: number
   height?: number
-  /** base style */
-  style?: Style
-  selectStyle?: Style
-  cursorStyle?: Style
-  lineNumberStyle?: Style
+
+  themeMode?: 'light' | 'dark'
 
   displayLineNumber?: boolean
   wrap?: boolean
@@ -49,7 +46,6 @@ export default class CodeViewer {
 
   style = DEFAULT_STYLE
   selectStyle = DEFAULT_SELECT_STYLE
-  cursorStyle = DEFAULT_CURSOR_STYLE
   lineNumberStyle = DEFAULT_LINE_NUMBER_STYLE
 
   displayLineNumber = true
@@ -67,7 +63,7 @@ export default class CodeViewer {
   overflowX: Overflow = 'auto'
   overflowY: Overflow = 'auto'
 
-  themes: ThemeOptions = DEFAULT_THEME_OPTIONS
+  scopeStyles: ScopeStyles = DEFAULT_SCOPE_STYLES
 
   #isMounted = false
 
@@ -76,10 +72,14 @@ export default class CodeViewer {
   horizontalScrollBar!: ScrollBar
   verticalScrollBar!: ScrollBar
 
-  constructor (options: ViewerOptions = {}, themes: ThemeOptions = githubThemes) {
+  constructor (options: ViewerOptions = {}, theme: CodeViewerTheme = options.themeMode === 'dark' ? darkTheme : lightTheme) {
     deepMergeObject(this, options)
 
-    this.setThemes(themes)
+    if (options.themeMode === 'dark') {
+      this.headerBar = DEFAULT_HEADER_BAR_DARK
+    }
+
+    this.setTheme(theme)
 
     this.updateRows()
 
@@ -195,25 +195,8 @@ export default class CodeViewer {
     renderer.canvas.addEventListener('click', this.handleClick)
   }
 
-  setThemes (themes: ThemeOptions): CodeViewer {
-    Object.entries(themes).forEach(([prop, value]) => {
-      this.setTheme(value, prop as keyof ThemeOptions)
-    })
-
-    this.#rows.forEach(row => {
-      row.children.forEach(item => {
-        item.style = this.getScopeStyle(item.scope as keyof ThemeOptions)
-      })
-    })
-
-    return this
-  }
-
-  setTheme (value: Style, prop: keyof ThemeOptions): CodeViewer {
-    this.themes[prop] = {
-      ...this.themes[prop],
-      ...value
-    }
+  setTheme (theme: CodeViewerTheme): CodeViewer {
+    deepMergeObject(this, theme)
 
     return this
   }
@@ -259,18 +242,18 @@ export default class CodeViewer {
     }
   }
 
-  getScopeStyle (scope: keyof ThemeOptions): Required<Style> {
-    const { themes, style } = this
+  getScopeStyle (scope: keyof ScopeStyles): Required<Style> {
+    const { scopeStyles, style } = this
 
     if (!scope) {
       return style
     }
 
-    const fullScopeStyle = themes[scope] as Required<Style>
+    const fullScopeStyle = scopeStyles[scope] as Required<Style>
 
     if ((scope as string).includes('.')) {
       const s = (scope as string).split('.').reduce<Style>((prev, key) => {
-        const s = themes[key as keyof ThemeOptions] as Required<Style>
+        const s = scopeStyles[key as keyof ScopeStyles] as Required<Style>
         if (s) {
           Object.assign(prev, s)
         }
@@ -467,6 +450,7 @@ export default class CodeViewer {
       this.#setState('copyState', 'Success')
     } catch (err) {
       this.#setState('copyState', 'Failure')
+      /** eslint-disable-next-line no-console */
       console.error(err)
     } finally {
       setTimeout(() => {

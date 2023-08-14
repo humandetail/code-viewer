@@ -29,15 +29,14 @@ npm i highlight.js
 ## Usage
 
 ```js
-import { CodeViewer, githubThemes } from '@humandetail/code-viewer'
+import { CodeViewer } from '@humandetail/code-viewer'
 
 const cv = new CodeViewer({
   content: 'Your code string.',
   language: 'language'
 })
 
-cv.setThemes(githubThemes)
-  .mount(document.querySelector('#container'))
+cv..mount(document.querySelector('#container'))
   .render()
 ```
 

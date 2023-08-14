@@ -1,10 +1,10 @@
-import { type TupleToRecord } from '../types'
+import type { Color, TupleToRecord } from '../types'
 
 export type BorderStyle = 'solid' | 'dashed' | 'dotted'
 
 export interface Style {
-  color?: string
-  backgroundColor?: string
+  color?: Color
+  backgroundColor?: Color
   fontSize?: number
   lineHeight?: number
   fontWeight?: number | string
@@ -17,7 +17,7 @@ export interface Style {
   /** all | [top, right, bottom, left] */
   borderWidth?: number | [number, number, number, number]
   /** all | [top, right, bottom, left] */
-  borderColor?: string | [string, string, string, string]
+  borderColor?: Color | [Color, Color, Color, Color]
 
   borderRadius?: number
 
@@ -28,25 +28,19 @@ export interface Style {
 }
 
 export interface LineNumberStyle {
-  color?: string
-  borderColor?: string
-  borderFocusColor?: string
+  color?: Color
+  borderColor?: Color
+  borderFocusColor?: Color
   padding?: number
 }
 
-export interface CursorStyle {
-  backgroundColor: string
-  width: number
-  height?: number
-}
-
-export type ThemeOptions = TupleToRecord<typeof scopes, Style>
+export type ScopeStyles = TupleToRecord<typeof scopes, Style>
 
 export interface ScrollBarStyle {
   size: number
-  borderColor: string
-  backgroundColor: string
-  thumbBackgroundColor: string
+  borderColor: Color
+  backgroundColor: Color
+  thumbBackgroundColor: Color
 }
 
 export type ColorStop = [number, string]
@@ -58,11 +52,11 @@ export interface HeaderBar {
   language?: {
     visible: boolean
     fontSize: number
-    color: string
+    color: Color
   }
   style: {
-    borderColor: string
-    backgroundColor: string
+    borderColor: Color
+    backgroundColor: Color
     padding: [number, number, number, number]
   }
 }
@@ -152,36 +146,23 @@ export const DEFAULT_STYLE: Required<Style> = {
   // ...
 }
 
-/** Default Theme Options */
-export const DEFAULT_THEME_OPTIONS = ((): ThemeOptions =>
+/** Default Scope Styles */
+export const DEFAULT_SCOPE_STYLES = ((): ScopeStyles =>
   // scopes.reduce((options, scope) => {
   //   options[scope] = DEFAULT_STYLE
   //   return options
-  // }, {} as Required<ThemeOptions>)
+  // }, {} as Required<ScopeStyles>)
   ({})
 )()
-
-export const DEFAULT_CURSOR_STYLE: CursorStyle = {
-  backgroundColor: '#333',
-  width: 1
-}
 
 export const DEFAULT_SELECT_STYLE: Style = {
   backgroundColor: '#0088ff'
 }
 
 export const DEFAULT_LINE_NUMBER_STYLE: Required<LineNumberStyle> = {
-  // ...DEFAULT_STYLE,
   color: '#a1a1a1',
-  // fontSize: DEFAULT_FONT_SIZE - 2,
-  // lineHeight: DEFAULT_LINE_HEIGHT,
-  // borderWidth: [0, 1, 0, 0],
   borderColor: '#c1c1c1',
   borderFocusColor: '#c1c1c1',
-  // borderStyle: 'solid',
-  // borderRadius: 0,
-  // padding: [0, DEFAULT_PADDING / 2, 0, DEFAULT_PADDING / 2],
-  // margin: [0, DEFAULT_PADDING, 0, 0]
   padding: DEFAULT_PADDING
 }
 
@@ -205,5 +186,21 @@ export const DEFAULT_HEADER_BAR: HeaderBar = {
     padding: [DEFAULT_PADDING / 2, DEFAULT_PADDING, DEFAULT_PADDING / 2, DEFAULT_PADDING],
     borderColor: '#c1c1c1',
     backgroundColor: '#f6f6f6'
+  }
+}
+
+export const DEFAULT_HEADER_BAR_DARK: HeaderBar = {
+  visible: true,
+  collapsible: true,
+  canCopy: true,
+  language: {
+    visible: true,
+    color: '#666',
+    fontSize: 14
+  },
+  style: {
+    padding: [DEFAULT_PADDING / 2, DEFAULT_PADDING, DEFAULT_PADDING / 2, DEFAULT_PADDING],
+    borderColor: '#333',
+    backgroundColor: '#0d1117'
   }
 }

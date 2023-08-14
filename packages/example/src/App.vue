@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { CodeViewer, githubThemes, listLanguages } from '@humandetail/code-viewer'
+import { CodeViewer, listLanguages } from '@humandetail/code-viewer'
 
 const languages = listLanguages()
 const lang = ref('javascript')
@@ -38,18 +38,13 @@ const containerRef = ref()
 const cv = new CodeViewer({
   content: code.value,
   language: lang.value,
-  style: {
-    fontSize: 12,
-    lineHeight: 18
-  },
   width: 800,
   height: 600,
   breakRow: false,
   overflowX: 'scroll',
-  overflowY: 'auto'
+  overflowY: 'auto',
+  themeMode: 'dark'
 })
-
-cv.setThemes(githubThemes)
 
 onMounted(() => {
   cv.mount(containerRef.value)

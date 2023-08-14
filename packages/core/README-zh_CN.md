@@ -2,7 +2,7 @@
 
 这是一个使用 Canvas 来展示代码的库，它允许您在网页上绘制代码片段，以更具视觉吸引力的方式展示您的代码。
 
-[English](https://github.com/humandetail/code-viewer/README.md) | 简体中文
+[English](https://github.com/humandetail/code-viewer/blob/main/README.md) | 简体中文
 
 ## 特性
 
@@ -14,7 +14,7 @@
 
 ## 演示
 
-这是一个 [playground](https://humandetail.github.io/code-viewer/).
+这是一个 [演示地址](https://humandetail.github.io/code-viewer/).
 
 ## 安装
 
@@ -29,15 +29,14 @@ npm i highlight.js
 ## 使用示例
 
 ```js
-import { CodeViewer, githubThemes } from '@humandetail/code-viewer'
+import { CodeViewer } from '@humandetail/code-viewer'
 
 const cv = new CodeViewer({
   content: 'Your code string.',
   language: 'language'
 })
 
-cv.setThemes(githubThemes)
-  .mount(document.querySelector('#container'))
+cv.mount(document.querySelector('#container'))
   .render()
 ```
 

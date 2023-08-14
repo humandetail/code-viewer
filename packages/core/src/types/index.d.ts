@@ -6,3 +6,5 @@ export interface Coordinate {
   x: number
   y: number
 }
+
+export type Color = string | CanvasGradient | CanvasPattern

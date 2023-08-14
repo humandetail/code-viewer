@@ -1,4 +1,4 @@
-import type { Coordinate } from '../types'
+import type { Color, Coordinate } from '../types'
 
 type CurryFunction<T> = (arg: T) => T | CurryFunction<T>
 type ComposeFunction = <T>(...funcs: Array<(arg: T) => T>) => (arg: T) => T
@@ -50,10 +50,12 @@ export const isAllZero = (val: number | [number, number, number, number]) => {
     : val.every(i => i === 0)
 }
 
-export const isAllTransparent = (val: string | [string, string, string, string]) => {
+export const isAllTransparent = (val: Color | [Color, Color, Color, Color]) => {
   return typeof val === 'string'
     ? val.toLowerCase() === 'transparent'
-    : val.every(i => i.toLowerCase() === 'transparent')
+    : isArray(val)
+      ? val.every(i => i === 'string' ? i.toLowerCase() === 'transparent' : false)
+      : false
 }
 
 export const compose: ComposeFunction = (...funcs) => (arg) => {
