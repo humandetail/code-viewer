@@ -1,5 +1,6 @@
 import type { LineNumberStyle, ScopeStyles, Style } from '../config/defaultSetting'
-import defaultTheme from './github'
+import lightTheme from './github'
+import darkTheme from './githubDark'
 
 export interface CodeViewerTheme {
   style?: Style
@@ -9,5 +10,6 @@ export interface CodeViewerTheme {
 }
 
 export {
-  defaultTheme
+  lightTheme,
+  darkTheme
 }

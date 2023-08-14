@@ -188,3 +188,19 @@ export const DEFAULT_HEADER_BAR: HeaderBar = {
     backgroundColor: '#f6f6f6'
   }
 }
+
+export const DEFAULT_HEADER_BAR_DARK: HeaderBar = {
+  visible: true,
+  collapsible: true,
+  canCopy: true,
+  language: {
+    visible: true,
+    color: '#666',
+    fontSize: 14
+  },
+  style: {
+    padding: [DEFAULT_PADDING / 2, DEFAULT_PADDING, DEFAULT_PADDING / 2, DEFAULT_PADDING],
+    borderColor: '#333',
+    backgroundColor: '#0d1117'
+  }
+}

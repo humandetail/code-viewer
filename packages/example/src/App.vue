@@ -38,15 +38,12 @@ const containerRef = ref()
 const cv = new CodeViewer({
   content: code.value,
   language: lang.value,
-  style: {
-    fontSize: 12,
-    lineHeight: 18
-  },
   width: 800,
   height: 600,
   breakRow: false,
   overflowX: 'scroll',
-  overflowY: 'auto'
+  overflowY: 'auto',
+  themeMode: 'dark'
 })
 
 onMounted(() => {

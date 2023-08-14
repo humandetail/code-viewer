@@ -2,13 +2,13 @@
  * Code Renderer
  */
 
-import { DEFAULT_HEADER_BAR, DEFAULT_LINE_NUMBER_STYLE, DEFAULT_SELECT_STYLE, DEFAULT_STYLE, DEFAULT_SCOPE_STYLES, type Style, type ScopeStyles } from '../config/defaultSetting'
+import { DEFAULT_HEADER_BAR, DEFAULT_LINE_NUMBER_STYLE, DEFAULT_SELECT_STYLE, DEFAULT_STYLE, DEFAULT_SCOPE_STYLES, type Style, type ScopeStyles, DEFAULT_HEADER_BAR_DARK } from '../config/defaultSetting'
 import { deepMergeObject, getMouseCoordinate, isEmptyObject, isString } from '../utils/tools'
 import Renderer from './Renderer'
 import { type Row, parseContent } from './Parser'
 import ScrollBar, { ScrollBarType } from './ScrollBar'
 import { type Coordinate } from '../types'
-import { type CodeViewerTheme, defaultTheme } from '../themes'
+import { type CodeViewerTheme, lightTheme, darkTheme } from '../themes'
 
 type Overflow = 'auto' | 'hidden' | 'scroll'
 
@@ -19,6 +19,8 @@ export interface ViewerOptions {
 
   width?: number
   height?: number
+
+  themeMode?: 'light' | 'dark'
 
   displayLineNumber?: boolean
   wrap?: boolean
@@ -70,8 +72,12 @@ export default class CodeViewer {
   horizontalScrollBar!: ScrollBar
   verticalScrollBar!: ScrollBar
 
-  constructor (options: ViewerOptions = {}, theme: CodeViewerTheme = defaultTheme) {
+  constructor (options: ViewerOptions = {}, theme: CodeViewerTheme = options.themeMode === 'dark' ? darkTheme : lightTheme) {
     deepMergeObject(this, options)
+
+    if (options.themeMode === 'dark') {
+      this.headerBar = DEFAULT_HEADER_BAR_DARK
+    }
 
     this.setTheme(theme)
 
