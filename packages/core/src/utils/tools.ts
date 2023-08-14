@@ -1,3 +1,5 @@
+import type { Coordinate } from '../types'
+
 type CurryFunction<T> = (arg: T) => T | CurryFunction<T>
 type ComposeFunction = <T>(...funcs: Array<(arg: T) => T>) => (arg: T) => T
 
@@ -65,5 +67,24 @@ export const toCurry = <T>(fn: (...args: T[]) => T, arity = fn.length): (arg: T)
     } else {
       return (...nextArgs: T[]) => curried(...args.concat(nextArgs))
     }
+  }
+}
+
+export const getMouseCoordinate = (e: MouseEvent): Coordinate => {
+  const target = e.target as HTMLEmbedElement
+
+  if (!('innerHTML' in target)) {
+    throw new TypeError('Event target expect a HTMLElement but got', target)
+  }
+
+  const {
+    clientX,
+    clientY
+  } = e
+  const { left, top } = target.getBoundingClientRect()
+
+  return {
+    x: clientX - left,
+    y: clientY - top
   }
 }
