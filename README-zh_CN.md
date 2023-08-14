@@ -2,7 +2,7 @@
 
 这是一个使用 Canvas 来展示代码的库，它允许您在网页上绘制代码片段，以更具视觉吸引力的方式展示您的代码。
 
-[English](https://github.com/humandetail/code-viewer/README.md) | 简体中文
+[English](https://github.com/humandetail/code-viewer/blob/main/README.md) | 简体中文
 
 ## 特性
 
