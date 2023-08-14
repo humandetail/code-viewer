@@ -14,7 +14,7 @@
 
 ## 演示
 
-这是一个 [playground](https://humandetail.github.io/code-viewer/).
+这是一个 [演示地址](https://humandetail.github.io/code-viewer/).
 
 ## 安装
 
@@ -29,15 +29,14 @@ npm i highlight.js
 ## 使用示例
 
 ```js
-import { CodeViewer, githubThemes } from '@humandetail/code-viewer'
+import { CodeViewer } from '@humandetail/code-viewer'
 
 const cv = new CodeViewer({
   content: 'Your code string.',
   language: 'language'
 })
 
-cv.setThemes(githubThemes)
-  .mount(document.querySelector('#container'))
+cv.mount(document.querySelector('#container'))
   .render()
 ```
 

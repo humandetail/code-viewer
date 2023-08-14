@@ -1,5 +1,5 @@
 import hljs from 'highlight.js'
-import { type HeaderBar, type LineNumberStyle, type Style, type ThemeOptions } from '../config/defaultSetting'
+import { type HeaderBar, type LineNumberStyle, type Style, type ScopeStyles } from '../config/defaultSetting'
 import { type Size, getMaxRenderIndex, getTextSize } from './Measure'
 import { LF_REGEX, compose, isString, splitLF, toCurry } from '../utils/tools'
 import type CodeViewer from './CodeViewer'
@@ -179,7 +179,7 @@ const mergeData = (
   }
 
   list.forEach(({ scope, content }) => {
-    const currentStyle = getScopeStyle(scope as keyof ThemeOptions)
+    const currentStyle = getScopeStyle(scope as keyof ScopeStyles)
 
     if (LF_REGEX.test(content)) {
       splitLF(content).forEach((item, index, sourceArr) => {

@@ -2,7 +2,7 @@
 
 This is a library that utilizes Canvas to showcase code snippets, allowing you to visually display your code on web pages in an engaging way.
 
-English | [简体中文](https://github.com/humandetail/code-viewer/README-zh_CN.md)
+English | [简体中文](https://github.com/humandetail/code-viewer/blob/main/README-zh_CN.md)
 
 ## Features
 
@@ -29,15 +29,14 @@ npm i highlight.js
 ## Usage
 
 ```js
-import { CodeViewer, githubThemes } from '@humandetail/code-viewer'
+import { CodeViewer } from '@humandetail/code-viewer'
 
 const cv = new CodeViewer({
   content: 'Your code string.',
   language: 'language'
 })
 
-cv.setThemes(githubThemes)
-  .mount(document.querySelector('#container'))
+cv..mount(document.querySelector('#container'))
   .render()
 ```
 

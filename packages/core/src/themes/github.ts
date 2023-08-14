@@ -1,6 +1,7 @@
-import type { ThemeOptions } from '../config/defaultSetting'
+import type { CodeViewerTheme } from '.'
+import { DEFAULT_LINE_NUMBER_STYLE, DEFAULT_SCROLL_BAR_STYLE, DEFAULT_STYLE, type ScopeStyles } from '../config/defaultSetting'
 
-const theme: ThemeOptions = {
+const scopeStyles: ScopeStyles = {
   doctag: { color: '#d73a49' },
   keyword: { color: '#d73a49' },
   'meta keyword': { color: '#d73a49' },
@@ -41,6 +42,13 @@ const theme: ThemeOptions = {
   strong: { color: '#24292e', fontWeight: 700 },
   addition: { color: '#22863a', backgroundColor: '#f0fff4' },
   deletion: { color: '#b31d28', backgroundColor: '#ffeef0' }
+}
+
+const theme: Required<CodeViewerTheme> = {
+  style: DEFAULT_STYLE,
+  lineNumberStyle: DEFAULT_LINE_NUMBER_STYLE,
+  scrollBarStyle: DEFAULT_SCROLL_BAR_STYLE,
+  scopeStyles
 }
 
 export default theme

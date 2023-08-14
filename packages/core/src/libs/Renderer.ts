@@ -1,6 +1,6 @@
 import { type HeaderBar, type BorderStyle, type LineNumberStyle, type Style } from '../config/defaultSetting'
-import { type Coordinate } from '../types'
-import { isAllTransparent, isAllZero } from '../utils/tools'
+import type { Color, Coordinate } from '../types'
+import { isAllTransparent, isAllZero, isArray } from '../utils/tools'
 import type CodeViewer from './CodeViewer'
 import { type Size } from './Measure'
 import { type LineNumber, type Row } from './Parser'
@@ -288,7 +288,7 @@ export default class Renderer {
     this.restore()
   }
 
-  drawHeaderBarCopyWidget (right: number, y: number, backgroundColor: string) {
+  drawHeaderBarCopyWidget (right: number, y: number, backgroundColor: Color) {
     const {
       ctx,
       width,
@@ -406,19 +406,12 @@ export default class Renderer {
     const [topWidth, rightWidth, bottomWidth, leftWidth] = typeof borderWidth === 'number'
       ? Array(4).fill(borderWidth) as [number, number, number, number]
       : borderWidth
-    const [topColor, rightColor, bottomColor, leftColor] = typeof borderColor === 'string'
-      ? Array(4).fill(borderColor) as [string, string, string, string]
+    const [topColor, rightColor, bottomColor, leftColor] = !isArray(borderColor)
+      ? Array(4).fill(borderColor) as [Color, Color, Color, Color]
       : borderColor
     const [topStyle, rightStyle, bottomStyle, leftStyle] = typeof borderStyle === 'string'
       ? Array(4).fill(borderStyle) as [BorderStyle, BorderStyle, BorderStyle, BorderStyle]
       : borderStyle
-
-    console.log({
-      width,
-      height,
-      rightWidth,
-      bottomWidth
-    })
 
     this.drawLine([0, 0 + topWidth / 2], [width, 0 + topWidth / 2], topWidth, topStyle, topColor, borderRadius, 'top')
     this.drawLine([width - rightWidth / 2, 0], [width - rightWidth / 2, height], rightWidth, rightStyle, rightColor, borderRadius, 'right')
@@ -431,7 +424,7 @@ export default class Renderer {
     [x2, y2]: [number, number],
     lineWidth: number,
     lineStyle: BorderStyle,
-    lineColor: string,
+    lineColor: Color,
     borderRadius = 0,
     ori: 'top' | 'right' | 'bottom' | 'left' = 'top'
   ) {
@@ -498,7 +491,7 @@ export default class Renderer {
     ctx.restore()
   }
 
-  drawBackground (color: string, { width, height }: Size, radii = 0) {
+  drawBackground (color: Color, { width, height }: Size, radii = 0) {
     const { ctx } = this
     ctx.save()
     ctx.beginPath()
@@ -516,9 +509,9 @@ export default class Renderer {
     scrollDistance: number,
     thumbLength: number,
     visibleLength: number,
-    borderColor: string,
-    backgroundColor: string,
-    thumbBackgroundColor: string
+    borderColor: Color,
+    backgroundColor: Color,
+    thumbBackgroundColor: Color
   ) {
     const { ctx } = this
 
@@ -540,7 +533,7 @@ export default class Renderer {
     visibleLength: number,
     scrollDistance: number,
     thumbLength: number,
-    thumbBackgroundColor: string
+    thumbBackgroundColor: Color
   ) {
     const { ctx, height } = this
 
@@ -559,7 +552,7 @@ export default class Renderer {
     visibleLength: number,
     scrollDistance: number,
     thumbLength: number,
-    thumbBackgroundColor: string
+    thumbBackgroundColor: Color
   ) {
     const { ctx, width } = this
 
