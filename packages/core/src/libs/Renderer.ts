@@ -413,10 +413,17 @@ export default class Renderer {
       ? Array(4).fill(borderStyle) as [BorderStyle, BorderStyle, BorderStyle, BorderStyle]
       : borderStyle
 
-    this.drawLine([0, 0], [width, 0], topWidth, topStyle, topColor, borderRadius, 'top')
+    console.log({
+      width,
+      height,
+      rightWidth,
+      bottomWidth
+    })
+
+    this.drawLine([0, 0 + topWidth / 2], [width, 0 + topWidth / 2], topWidth, topStyle, topColor, borderRadius, 'top')
     this.drawLine([width - rightWidth / 2, 0], [width - rightWidth / 2, height], rightWidth, rightStyle, rightColor, borderRadius, 'right')
     this.drawLine([width, height - bottomWidth / 2], [0, height - bottomWidth / 2], bottomWidth, bottomStyle, bottomColor, borderRadius, 'bottom')
-    this.drawLine([0, height], [0, 0], leftWidth, leftStyle, leftColor, borderRadius, 'left')
+    this.drawLine([0 + leftWidth / 2, height], [0 + leftWidth / 2, 0], leftWidth, leftStyle, leftColor, borderRadius, 'left')
   }
 
   drawLine (
