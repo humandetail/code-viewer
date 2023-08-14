@@ -2,8 +2,8 @@
  * Code Renderer
  */
 
-import { DEFAULT_CURSOR_STYLE, DEFAULT_LINE_NUMBER_STYLE, DEFAULT_SELECT_STYLE, DEFAULT_STYLE, DEFAULT_THEME_OPTIONS, type Style, type ThemeOptions } from '../config/defaultSetting'
-import { deepMergeObject, isEmptyObject, isString } from '../utils/tools'
+import { DEFAULT_CURSOR_STYLE, DEFAULT_HEADER_BAR, DEFAULT_LINE_NUMBER_STYLE, DEFAULT_SELECT_STYLE, DEFAULT_STYLE, DEFAULT_THEME_OPTIONS, type Style, type ThemeOptions } from '../config/defaultSetting'
+import { deepMergeObject, getMouseCoordinate, isEmptyObject, isString } from '../utils/tools'
 import Renderer from './Renderer'
 import { type Row, parseContent } from './Parser'
 import ScrollBar, { ScrollBarType } from './ScrollBar'
@@ -11,6 +11,7 @@ import { type Coordinate } from '../types'
 import githubThemes from '../theme/github'
 
 type Overflow = 'auto' | 'hidden' | 'scroll'
+
 export interface ViewerOptions {
   content?: string
   // code language
@@ -30,6 +31,8 @@ export interface ViewerOptions {
   breakRow?: boolean
   overflowX?: Overflow
   overflowY?: Overflow
+
+  collapsed?: boolean
 }
 
 export default class CodeViewer {
@@ -42,6 +45,8 @@ export default class CodeViewer {
   actualWidth = 0
   actualHeight = 0
 
+  headerBar = DEFAULT_HEADER_BAR
+
   style = DEFAULT_STYLE
   selectStyle = DEFAULT_SELECT_STYLE
   cursorStyle = DEFAULT_CURSOR_STYLE
@@ -51,6 +56,9 @@ export default class CodeViewer {
   wrap = false
   selectable = true
   breakRow = true
+  /** is collapsed */
+  collapsed = false
+  copyState: 'Default' | 'Success' | 'Failure' = 'Default'
 
   // If overflowX is `auto` and breakRow is false.
   // The canvas width will follow the maximum width of the row.
@@ -77,6 +85,7 @@ export default class CodeViewer {
 
     this.renderer = new Renderer(
       this.style,
+      this,
       options.width,
       options.height
     )
@@ -98,7 +107,7 @@ export default class CodeViewer {
     return width - right
   }
 
-  #init (initEvent = false) {
+  #init (initEvent = true) {
     const {
       breakRow,
       overflowX,
@@ -182,6 +191,8 @@ export default class CodeViewer {
     if (allowScroll) {
       renderer.canvas.addEventListener('wheel', this.handleMouseWheel)
     }
+
+    renderer.canvas.addEventListener('click', this.handleClick)
   }
 
   setThemes (themes: ThemeOptions): CodeViewer {
@@ -205,6 +216,47 @@ export default class CodeViewer {
     }
 
     return this
+  }
+
+  #setState <T extends keyof this>(prop: T, state: this[T]) {
+    this[prop] = state
+
+    const {
+      width,
+      renderer,
+      headerBar,
+      style: {
+        lineHeight
+      }
+    } = this
+
+    let { height } = this
+
+    const {
+      style: {
+        padding: [padTop, , padBottom]
+      }
+    } = headerBar
+
+    switch (prop) {
+      case 'copyState':
+        renderer.drawHeaderBar(headerBar)
+        this.afterRender()
+        break
+      case 'collapsed':
+        if (state) {
+          height = lineHeight + padTop + padBottom
+          renderer.init(width, height)
+          renderer.drawHeaderBar(headerBar)
+          this.afterRender()
+        } else {
+          renderer.init(width, height)
+          this.update(undefined, undefined, false)
+        }
+        break
+      default:
+        break
+    }
   }
 
   getScopeStyle (scope: keyof ThemeOptions): Required<Style> {
@@ -242,7 +294,7 @@ export default class CodeViewer {
     }
   }
 
-  update (content?: string, language?: string) {
+  update (content?: string, language?: string, resetScroll = true) {
     if (!this.#isMounted) {
       throw new Error('Make sure the `mount()` method is called first.')
     }
@@ -260,12 +312,25 @@ export default class CodeViewer {
 
     const {
       renderer,
-      lineNumberStyle
+      lineNumberStyle,
+      horizontalScrollBar,
+      verticalScrollBar
     } = this
 
-    this.horizontalScrollBar.scroll(0)
-    this.verticalScrollBar.scroll(0)
-    renderer.update(this.#rows, lineNumberStyle, { x: 0, y: 0 })
+    if (resetScroll) {
+      horizontalScrollBar.scroll(0)
+      verticalScrollBar.scroll(0)
+    }
+    renderer.update(
+      this.#rows,
+      lineNumberStyle,
+      {
+        x: horizontalScrollBar.scrollDistance,
+        y: verticalScrollBar.scrollDistance
+      },
+      this.headerBar
+    )
+    this.afterRender()
   }
 
   updateRows () {
@@ -296,6 +361,7 @@ export default class CodeViewer {
         lineNumberStyle,
         width - (padding[1] ?? 0) - (padding[3] ?? 0), // max content render width
         lineHeight,
+        this.headerBar,
         this.getScopeStyle.bind(this)
       )
     } else {
@@ -312,7 +378,7 @@ export default class CodeViewer {
       throw new Error('Make sure the `mount()` method is called first.')
     }
 
-    this.renderer.render(this.#rows, this.lineNumberStyle, { x: 0, y: 0 })
+    this.renderer.render(this.#rows, this.lineNumberStyle, { x: 0, y: 0 }, this.headerBar)
     this.afterRender()
     return this
   }
@@ -367,6 +433,50 @@ export default class CodeViewer {
       x,
       y
     }, 'scrollBy')
+  }
+
+  handleClick = (e: MouseEvent) => {
+    const { x, y } = getMouseCoordinate(e)
+
+    const { renderer } = this
+
+    const pos = renderer.getMousePosition({ x, y })
+
+    switch (pos) {
+      case 'btn-copy':
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        this.handleCopy()
+        break
+      case 'btn-collapse':
+        this.toggleCollapse()
+        break
+      case 'other':
+      default:
+        break
+    }
+  }
+
+  async handleCopy () {
+    if (this.copyState !== 'Default') {
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(this.content)
+
+      this.#setState('copyState', 'Success')
+    } catch (err) {
+      this.#setState('copyState', 'Failure')
+      console.error(err)
+    } finally {
+      setTimeout(() => {
+        this.#setState('copyState', 'Default')
+      }, 2000)
+    }
+  }
+
+  toggleCollapse () {
+    this.#setState('collapsed', !this.collapsed)
   }
 
   mount (el: string | Element): CodeViewer {

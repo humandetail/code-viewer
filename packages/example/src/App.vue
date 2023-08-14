@@ -31,7 +31,7 @@ import { CodeViewer, githubThemes, listLanguages } from '@humandetail/code-viewe
 
 const languages = listLanguages()
 const lang = ref('javascript')
-const code = ref('hello world')
+const code = ref('const a = 1\nconst b = 2\nconsole.log(a + b) // 3')
 
 const containerRef = ref()
 

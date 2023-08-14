@@ -49,6 +49,24 @@ export interface ScrollBarStyle {
   thumbBackgroundColor: string
 }
 
+export type ColorStop = [number, string]
+
+export interface HeaderBar {
+  visible: boolean
+  collapsible?: boolean
+  canCopy?: boolean
+  language?: {
+    visible: boolean
+    fontSize: number
+    color: string
+  }
+  style: {
+    borderColor: string
+    backgroundColor: string
+    padding: [number, number, number, number]
+  }
+}
+
 /**
  * Stylable Scopes
  * @see https://highlightjs.readthedocs.io/en/latest/css-classes-reference.html#scope-reference
@@ -172,4 +190,20 @@ export const DEFAULT_SCROLL_BAR_STYLE: Required<ScrollBarStyle> = {
   borderColor: '#e1e1e1',
   backgroundColor: 'rgba(225,225,225,.1)',
   thumbBackgroundColor: 'pink'
+}
+
+export const DEFAULT_HEADER_BAR: HeaderBar = {
+  visible: true,
+  collapsible: true,
+  canCopy: true,
+  language: {
+    visible: true,
+    color: '#9d9e9f',
+    fontSize: 14
+  },
+  style: {
+    padding: [DEFAULT_PADDING / 2, DEFAULT_PADDING, DEFAULT_PADDING / 2, DEFAULT_PADDING],
+    borderColor: '#c1c1c1',
+    backgroundColor: '#f6f6f6'
+  }
 }

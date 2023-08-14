@@ -1,5 +1,5 @@
 import hljs from 'highlight.js'
-import { type LineNumberStyle, type Style, type ThemeOptions } from '../config/defaultSetting'
+import { type HeaderBar, type LineNumberStyle, type Style, type ThemeOptions } from '../config/defaultSetting'
 import { type Size, getMaxRenderIndex, getTextSize } from './Measure'
 import { LF_REGEX, compose, isString, splitLF, toCurry } from '../utils/tools'
 import type CodeViewer from './CodeViewer'
@@ -57,12 +57,15 @@ const parseRow = (
   lineNumberStyle: Required<LineNumberStyle>,
   maxWidth: number,
   lineHeight: number,
+  headerBar: HeaderBar,
   rows: Row[]
 ): Row[] => {
   if (rows.length === 0) return rows
 
   let left = 0
-  let top = 0
+  let top = headerBar.visible
+    ? headerBar.style.padding[0] + headerBar.style.padding[3] + lineHeight
+    : 0
 
   const maxNumber = Math.max.apply(null, rows.map(({ lineNumber }) => lineNumber.value))
   const { width } = getTextSize(`${maxNumber}`, { ...rows[0].children[0].style })
@@ -214,6 +217,18 @@ const mergeData = (
   return rows
 }
 
+/**
+ * Parse content
+ * @param content - code string
+ * @param language - code language
+ * @param breakRow - whether to break the line
+ * @param displayLineNumber - whether to display the line number
+ * @param lineNumberStyle - line number style
+ * @param maxWidth - max render width
+ * @param lineHeight - line height
+ * @param headerBar - header bar setting
+ * @param getScopeStyle - get scope style
+ */
 export const parseContent = (
   content: string,
   language = 'PlainText',
@@ -222,6 +237,7 @@ export const parseContent = (
   lineNumberStyle: Required<LineNumberStyle>,
   maxWidth: number,
   lineHeight: number,
+  headerBar: HeaderBar,
   getScopeStyle: CodeViewer['getScopeStyle']
 ) => {
   const scopeDataList = (
@@ -231,7 +247,7 @@ export const parseContent = (
   )._emitter.rootNode.children as ScopeData[]
 
   return compose<any>(
-    toCurry<any>(parseRow)(breakRow)(displayLineNumber)(lineNumberStyle)(maxWidth)(lineHeight),
+    toCurry<any>(parseRow)(breakRow)(displayLineNumber)(lineNumberStyle)(maxWidth)(lineHeight)(headerBar),
     toCurry<any>(mergeData)(getScopeStyle),
     flatScopeDataList
   )(scopeDataList)
