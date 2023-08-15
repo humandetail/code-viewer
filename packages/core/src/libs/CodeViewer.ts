@@ -79,7 +79,7 @@ export default class CodeViewer {
       this.headerBar = DEFAULT_HEADER_BAR_DARK
     }
 
-    this.setTheme(theme)
+    this.setTheme(theme, options.themeMode)
 
     this.updateRows()
 
@@ -195,9 +195,11 @@ export default class CodeViewer {
     renderer.canvas.addEventListener('click', this.handleClick)
   }
 
-  setTheme (theme: CodeViewerTheme): CodeViewer {
+  setTheme (theme: CodeViewerTheme, themeMode: 'light' | 'dark' = 'light'): CodeViewer {
+    Object.assign(this, themeMode === 'dark' ? darkTheme : lightTheme)
     deepMergeObject(this, theme)
 
+    console.log(this)
     return this
   }
 

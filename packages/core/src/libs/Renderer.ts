@@ -174,14 +174,15 @@ export default class Renderer {
   }: HeaderBar) {
     const {
       width,
-      style: { lineHeight },
-      ctx
+      style: { lineHeight, borderRadius },
+      ctx,
+      codeViewer
     } = this
     const height = lineHeight + padTop + padBottom
 
     const collapseWidgetRadius = 6
 
-    this.fillRect(0, 0, width, height, backgroundColor)
+    this.drawHeaderBackground(width, height, backgroundColor, borderRadius)
 
     this.drawHeaderBarCollapseWidget(!!collapsible, padLeft, padTop, collapseWidgetRadius)
 
@@ -196,11 +197,37 @@ export default class Renderer {
     if (borderColor) {
       ctx.beginPath()
       ctx.strokeStyle = borderColor
-      ctx.moveTo(0, height)
-      ctx.lineTo(width, height)
+      ctx.moveTo(0 + (!codeViewer.collapsed ? 0 : borderRadius), height)
+      ctx.lineTo(width - (!codeViewer.collapsed ? 0 : borderRadius), height)
       ctx.closePath()
       ctx.stroke()
     }
+  }
+
+  drawHeaderBackground (width: number, height: number, backgroundColor: Color, borderRadius: number) {
+    const { ctx, codeViewer } = this
+
+    this.save()
+
+    ctx.beginPath()
+    ctx.moveTo(0, borderRadius)
+    ctx.quadraticCurveTo(0, 0, borderRadius, 0)
+    ctx.lineTo(width - borderRadius, 0)
+    ctx.quadraticCurveTo(width, 0, width, borderRadius)
+    if (codeViewer.collapsed) {
+      ctx.lineTo(width, height - borderRadius)
+      ctx.quadraticCurveTo(width, height, width - borderRadius, height)
+      ctx.lineTo(borderRadius, height)
+      ctx.quadraticCurveTo(0, height, 0, height - borderRadius)
+    } else {
+      ctx.lineTo(width, height)
+      ctx.lineTo(0, height)
+    }
+    ctx.closePath()
+    ctx.fillStyle = backgroundColor
+    ctx.fill()
+
+    this.restore()
   }
 
   drawHeaderBarCollapseWidget (collapsible: boolean, padLeft: number, padTop: number, r: number) {

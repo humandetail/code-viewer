@@ -44,6 +44,10 @@ const cv = new CodeViewer({
   overflowX: 'scroll',
   overflowY: 'auto',
   themeMode: 'dark'
+}, {
+  style: {
+    borderRadius: 16
+  }
 })
 
 onMounted(() => {
