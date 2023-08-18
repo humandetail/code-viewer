@@ -1,4 +1,4 @@
-import type { Color, TupleToRecord } from '../types'
+import type { Color, FontStyle, TextAlign, TextBaseLine, TupleToRecord } from '../types'
 
 export type BorderStyle = 'solid' | 'dashed' | 'dotted'
 
@@ -8,23 +8,25 @@ export interface Style {
   fontSize?: number
   lineHeight?: number
   fontWeight?: number | string
-  fontStyle?: string
+  fontStyle?: FontStyle
   fontFamily?: string
+  textAlign?: TextAlign
+  textBaseLine?: TextBaseLine
   opacity?: number
 
-  /** all | [top, right, bottom, left] */
-  borderStyle?: BorderStyle | [BorderStyle, BorderStyle, BorderStyle, BorderStyle]
-  /** all | [top, right, bottom, left] */
-  borderWidth?: number | [number, number, number, number]
-  /** all | [top, right, bottom, left] */
-  borderColor?: Color | [Color, Color, Color, Color]
+  /** all */
+  borderStyle?: BorderStyle
+  /** all */
+  borderWidth?: number
+  /** all */
+  borderColor?: Color
 
-  borderRadius?: number
+  borderRadius?: number | DOMPointInit | Iterable<number | DOMPointInit>
 
   /** [top, right, bottom, left] */
   padding?: [number, number, number, number]
-  /** [top, right, bottom, left] */
-  margin?: [number, number, number, number]
+  // /** [top, right, bottom, left] */
+  // margin?: [number, number, number, number]
 }
 
 export interface LineNumberStyle {
@@ -47,17 +49,17 @@ export type ColorStop = [number, string]
 
 export interface HeaderBar {
   visible: boolean
+  style: {
+    borderColor: Color
+    backgroundColor: Color
+    padding: [number, number, number, number]
+  }
   collapsible?: boolean
   canCopy?: boolean
   language?: {
     visible: boolean
     fontSize: number
     color: Color
-  }
-  style: {
-    borderColor: Color
-    backgroundColor: Color
-    padding: [number, number, number, number]
   }
 }
 
@@ -122,7 +124,7 @@ const scopes = [
 export const DEFAULT_FONT_SIZE = 16
 export const DEFAULT_LINE_HEIGHT = 22
 export const DEFAULT_PADDING = 16
-export const DEFAULT_BORDER_RADIUS = 8
+export const DEFAULT_BORDER_RADIUS = 4
 
 /** Default Style */
 export const DEFAULT_STYLE: Required<Style> = {
@@ -133,13 +135,15 @@ export const DEFAULT_STYLE: Required<Style> = {
   fontWeight: 'normal',
   fontStyle: 'normal',
   fontFamily: 'monospace, Courier New, Menlo, Monaco',
+  textAlign: 'left',
+  textBaseLine: 'middle',
   opacity: 1,
   borderWidth: 1,
   borderColor: '#333',
   borderStyle: 'solid',
-  borderRadius: 0,
-  padding: [DEFAULT_PADDING, DEFAULT_PADDING, DEFAULT_PADDING, DEFAULT_PADDING],
-  margin: [0, 0, 0, 0]
+  borderRadius: DEFAULT_BORDER_RADIUS,
+  padding: [DEFAULT_PADDING, DEFAULT_PADDING, DEFAULT_PADDING, DEFAULT_PADDING]
+  // margin: [0, 0, 0, 0]
 
   // @todo
   // hoverStyle
@@ -203,4 +207,20 @@ export const DEFAULT_HEADER_BAR_DARK: HeaderBar = {
     borderColor: '#333',
     backgroundColor: '#0d1117'
   }
+}
+
+export const DEFAULT_COLLAPSE_BUTTON = {
+  radius: 6,
+  width: 12,
+  height: 12,
+  fillColor: '#62c655',
+  strokeColor: '#444',
+  triangleFillColor: '#296218'
+}
+
+export const DEFAULT_COPY_BUTTON = {
+  width: 18,
+  height: 18,
+  fillColor: 'transparent',
+  strokeColor: '#296218'
 }

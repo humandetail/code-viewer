@@ -43,10 +43,10 @@ const cv = new CodeViewer({
   breakRow: false,
   overflowX: 'scroll',
   overflowY: 'auto',
-  themeMode: 'dark'
+  themeMode: 'light'
 }, {
   style: {
-    borderRadius: 16
+    borderRadius: 8
   }
 })
 

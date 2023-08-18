@@ -44,6 +44,8 @@ export const deepMergeObject = <O extends Record<any, any>, T extends Record<any
   }
 }
 
+export const isTransparent = (val?: Color) => !val ?? val === 'transparent'
+
 export const isAllZero = (val: number | [number, number, number, number]) => {
   return typeof val === 'number'
     ? val === 0

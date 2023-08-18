@@ -5,10 +5,11 @@
 import { DEFAULT_HEADER_BAR, DEFAULT_LINE_NUMBER_STYLE, DEFAULT_SELECT_STYLE, DEFAULT_STYLE, DEFAULT_SCOPE_STYLES, type Style, type ScopeStyles, DEFAULT_HEADER_BAR_DARK } from '../config/defaultSetting'
 import { deepMergeObject, getMouseCoordinate, isEmptyObject, isString } from '../utils/tools'
 import Renderer from './Renderer'
-import { type Row, parseContent } from './Parser'
+import { type Row, parseContent, parseHeaderBar } from './Parser'
 import ScrollBar, { ScrollBarType } from './ScrollBar'
 import { type Coordinate } from '../types'
 import { type CodeViewerTheme, lightTheme, darkTheme } from '../themes'
+import { createBlock, type Block, BlockType } from './Block'
 
 type Overflow = 'auto' | 'hidden' | 'scroll'
 
@@ -68,6 +69,8 @@ export default class CodeViewer {
   #isMounted = false
 
   #rows: Row[] = []
+  #headerBarBlocks: Block[] = []
+  #blocks: Block[] = []
 
   horizontalScrollBar!: ScrollBar
   verticalScrollBar!: ScrollBar
@@ -115,7 +118,7 @@ export default class CodeViewer {
       width,
       height,
       style: {
-        padding: [top, right, bottom, left]
+        padding: [, right, bottom]
       },
       renderer
     } = this
@@ -124,10 +127,10 @@ export default class CodeViewer {
     let newHeight = height
 
     // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-    const actualWidth = this.actualWidth = Math.max.apply(null, this.#rows.map(({ width }) => width)) + (right ?? 0) + (left ?? 0)
+    const actualWidth = this.actualWidth = Math.max.apply(null, this.#blocks.map(({ x, width }) => x + width)) + (right ?? 0)
 
     // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-    const actualHeight = this.actualHeight = (this.#rows.at(-1)?.top ?? 0) + (this.#rows.at(-1)?.height ?? 0) + (top ?? 0) + (bottom ?? 0)
+    const actualHeight = this.actualHeight = Math.max.apply(null, this.#blocks.map(({ y, height }) => y + height)) + (bottom ?? 0)
 
     this.horizontalScrollBar = new ScrollBar(renderer, {
       type: ScrollBarType.horizontal,
@@ -199,45 +202,20 @@ export default class CodeViewer {
     Object.assign(this, themeMode === 'dark' ? darkTheme : lightTheme)
     deepMergeObject(this, theme)
 
-    console.log(this)
     return this
   }
 
   #setState <T extends keyof this>(prop: T, state: this[T]) {
     this[prop] = state
 
-    const {
-      width,
-      renderer,
-      headerBar,
-      style: {
-        lineHeight
-      }
-    } = this
-
-    let { height } = this
-
-    const {
-      style: {
-        padding: [padTop, , padBottom]
-      }
-    } = headerBar
-
     switch (prop) {
       case 'copyState':
-        renderer.drawHeaderBar(headerBar)
-        this.afterRender()
+        this.#headerBarBlocks = parseHeaderBar(this)
+        this.render()
         break
       case 'collapsed':
-        if (state) {
-          height = lineHeight + padTop + padBottom
-          renderer.init(width, height)
-          renderer.drawHeaderBar(headerBar)
-          this.afterRender()
-        } else {
-          renderer.init(width, height)
-          this.update(undefined, undefined, false)
-        }
+        this.#headerBarBlocks = parseHeaderBar(this)
+        this.render()
         break
       default:
         break
@@ -296,8 +274,6 @@ export default class CodeViewer {
     this.#init(false)
 
     const {
-      renderer,
-      lineNumberStyle,
       horizontalScrollBar,
       verticalScrollBar
     } = this
@@ -306,15 +282,7 @@ export default class CodeViewer {
       horizontalScrollBar.scroll(0)
       verticalScrollBar.scroll(0)
     }
-    renderer.update(
-      this.#rows,
-      lineNumberStyle,
-      {
-        x: horizontalScrollBar.scrollDistance,
-        y: verticalScrollBar.scrollDistance
-      },
-      this.headerBar
-    )
+    this.render()
     this.afterRender()
   }
 
@@ -322,35 +290,26 @@ export default class CodeViewer {
     if (this.content) {
       const {
         width,
-        style: {
-          padding,
-          lineHeight
-        },
-        breakRow,
-        displayLineNumber,
-        lineNumberStyle,
         content,
         language
       } = this
 
       if (!width) {
-        this.#rows = []
+        this.#headerBarBlocks = []
+        this.#blocks = []
         return
       }
 
-      this.#rows = parseContent(
+      this.#headerBarBlocks = parseHeaderBar(this)
+
+      this.#blocks = parseContent(
         content,
         language,
-        breakRow,
-        displayLineNumber,
-        lineNumberStyle,
-        width - (padding[1] ?? 0) - (padding[3] ?? 0), // max content render width
-        lineHeight,
-        this.headerBar,
-        this.getScopeStyle.bind(this)
+        this
       )
     } else {
-      this.#rows = []
+      this.#headerBarBlocks = []
+      this.#blocks = []
     }
   }
 
@@ -363,17 +322,70 @@ export default class CodeViewer {
       throw new Error('Make sure the `mount()` method is called first.')
     }
 
-    this.renderer.render(this.#rows, this.lineNumberStyle, { x: 0, y: 0 }, this.headerBar)
+    const blocks = [...this.#headerBarBlocks, ...this.#blocks]
+
+    // add bg Block
+    const {
+      width,
+      height,
+      collapsed,
+      style: {
+        borderRadius,
+        borderColor,
+        lineHeight,
+        borderWidth,
+        backgroundColor
+      },
+      headerBar: {
+        style: {
+          padding: [padTop, , padBottom]
+        }
+      },
+      renderer
+    } = this
+
+    const w = width
+    let h = height
+
+    if (collapsed) {
+      h = lineHeight + padTop + padBottom
+    }
+    renderer.init(w, h)
+
+    blocks.unshift(createBlock(BlockType.RECTANGLE, {
+      x: width / 2,
+      y: height / 2,
+      width: w,
+      height: h,
+      radii: borderRadius,
+      fillColor: backgroundColor,
+      strokeColor: 'transparent'
+    }))
+
+    // add border block
+    if (borderWidth > 0 && borderColor && borderColor !== 'transparent') {
+      blocks.push(createBlock(BlockType.RECTANGLE, {
+        x: w / 2,
+        y: h / 2,
+        width: w,
+        height: h,
+        radii: borderRadius,
+        fillColor: 'transparent',
+        strokeWidth: borderWidth,
+        strokeColor: borderColor
+      }))
+    }
+
+    renderer.render(blocks)
     this.afterRender()
+
     return this
   }
 
   afterRender () {
     const {
-      breakRow,
       horizontalScrollBar,
-      verticalScrollBar,
-      renderer
+      verticalScrollBar
     } = this
 
     if (horizontalScrollBar.isActive) {
@@ -383,8 +395,6 @@ export default class CodeViewer {
     if (verticalScrollBar.isActive) {
       verticalScrollBar.show()
     }
-
-    renderer.afterRender(breakRow)
   }
 
   execScroll ({ x, y }: Coordinate, behaviors: 'scroll' | 'scrollBy' = 'scroll') {
@@ -403,8 +413,9 @@ export default class CodeViewer {
     } else {
       y = 0
     }
+    console.log(x, y)
 
-    this.renderer.update(this.#rows, this.lineNumberStyle, { x, y })
+    // this.renderer.update(this.#rows, this.lineNumberStyle, { x, y })
     this.afterRender()
   }
 
