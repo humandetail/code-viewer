@@ -1,9 +1,8 @@
-import { type HeaderBar, type BorderStyle, type LineNumberStyle, type Style } from '../config/defaultSetting'
-import type { Color, Coordinate } from '../types'
-import { isAllTransparent, isAllZero, isArray } from '../utils/tools'
+import { type Style, DEFAULT_COPY_BUTTON, DEFAULT_COLLAPSE_BUTTON } from '../config/defaultSetting'
+import type { Color, Coordinate, Shadow } from '../types'
+import { type Block, BlockType, type TextBlock, type LineBlock, type RectangleBlock, type CircleBlock, type GroupBlock } from './Block'
 import type CodeViewer from './CodeViewer'
 import { type Size } from './Measure'
-import { type LineNumber, type Row } from './Parser'
 import { ScrollBarType } from './ScrollBar'
 
 export default class Renderer {
@@ -58,7 +57,6 @@ export default class Renderer {
 
   setCtxStyle ({
     color,
-    // backgroundColor,
     fontSize,
     lineHeight,
     fontWeight,
@@ -70,425 +68,234 @@ export default class Renderer {
 
     ctx.fillStyle = color
     ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px/${lineHeight}px ${fontFamily}`
-    ctx.globalAlpha = Math.max(1, Math.min(0, opacity))
+    ctx.globalAlpha = Math.min(1, Math.max(0, opacity))
   }
 
-  update (rows: Row[], lineNumberStyle?: Required<LineNumberStyle>, coordinate: Coordinate = { x: 0, y: 0 }, headerBar?: HeaderBar) {
+  setShadow ({
+    color,
+    blur,
+    offsetX,
+    offsetY
+  }: Shadow) {
+    const { ctx } = this
+
+    ctx.shadowColor = color
+    ctx.shadowBlur = blur
+    ctx.shadowOffsetX = offsetX ?? 0
+    ctx.shadowOffsetY = offsetY ?? 0
+  }
+
+  render (blocks: Block[]) {
     this.clear()
-    this.render(rows, lineNumberStyle, coordinate, headerBar)
-  }
 
-  render (rows: Row[], lineNumberStyle?: Required<LineNumberStyle>, coordinate: Coordinate = { x: 0, y: 0 }, headerBar?: HeaderBar) {
-    this.save()
-
-    const { style, width, height } = this
-
-    this.drawBackground(style.backgroundColor, { width, height }, style.borderRadius)
-
-    // render header bar
-    if (headerBar?.visible) {
-      this.drawHeaderBar(headerBar)
-    }
-
-    this.setCanvasStyle()
-
-    // render code
-    rows.forEach(row => {
-      this.renderRow(row, coordinate)
-    })
-
-    this.restore()
-
-    // render line number
-    const { style: { padding } } = this
-    const paddingTop = padding[0] ?? 0
-
-    rows.forEach(({ lineNumber }) => {
-      if (lineNumber.display) {
-        if (!lineNumberStyle) {
-          throw new Error('If you want to display the line number, set the line number style.')
-        }
-        this.save()
-        this.translate(0, paddingTop - coordinate.y)
-        this.drawLineNumber(lineNumber, lineNumberStyle)
-        this.restore()
-      }
+    blocks.forEach(block => {
+      this.renderBlock(block)
     })
   }
 
-  afterRender (breakRow: boolean) {
-    const {
-      style,
-      width,
-      height
-    } = this
-
-    this.save()
-    if (!breakRow) {
-      // @todo - Should set padding-right when the scroll reach right
+  renderBlock (block: Block) {
+    switch (block.type) {
+      case BlockType.GROUP:
+        this.renderGroupBlock(block)
+        break
+      case BlockType.TEXT:
+        this.drawTextBlock(block)
+        break
+      case BlockType.LINE:
+        this.drawLineBlock(block)
+        break
+      case BlockType.RECTANGLE:
+        this.drawRectBlock(block)
+        break
+      case BlockType.CIRCLE:
+        this.drawCircleBlock(block)
+        break
+      default:
+        break
     }
 
-    // @todo - Should set padding-bottom when the scroll reach bottom
-    this.drawBorder(style, { width, height })
     this.restore()
   }
 
-  renderRow (row: Row, { x, y }: Coordinate = { x: 0, y: 0 }) {
-    const { children, top } = row
-
-    this.save()
-    this.translate(0, top - y)
-    children.forEach(child => {
+  renderGroupBlock (block: GroupBlock) {
+    block.children.forEach(b => {
       this.save()
-      this.translate(child.left - x, child.top)
-      this.drawText(child.content, child.style)
+      this.rotate(block.x, block.y, block.angle)
+      this.renderBlock(b)
       this.restore()
     })
+  }
+
+  drawTextBlock ({
+    text,
+    x,
+    y,
+    width,
+    height,
+    angle,
+    fontSize,
+    fontStyle,
+    fontWeight,
+    fontFamily,
+    lineHeight,
+    textAlign,
+    textBaseLine,
+    opacity,
+    fillColor,
+    strokeColor,
+    shadow
+  }: TextBlock) {
+    const { ctx } = this
+
+    if (!text) return
+
+    this.save()
+    // set rotate
+    this.rotate(x, y, angle)
+    // fixed text align & text base line
+    this.translate(
+      textAlign === 'center'
+        ? 0
+        : textAlign === 'right'
+          ? width / 2
+          : -width / 2,
+      textBaseLine === 'middle'
+        ? 0
+        : textBaseLine === 'bottom'
+          ? height / 2
+          : -height / 2
+    )
+
+    ctx.textAlign = textAlign
+    ctx.textBaseline = textBaseLine
+    ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px/${lineHeight}px ${fontFamily}`
+    ctx.globalAlpha = Math.max(1, Math.min(0, opacity))
+
+    if (shadow) {
+      this.setShadow(shadow)
+    }
+
+    if (fillColor) {
+      ctx.fillStyle = fillColor
+      ctx.fillText(text, 0, 0)
+    }
+    if (strokeColor) {
+      ctx.strokeStyle = strokeColor
+      ctx.strokeText(text, 0, 0)
+    }
 
     this.restore()
   }
 
-  fillRect (x: number, y: number, w: number, h: number, fill?: string | CanvasGradient | CanvasPattern) {
+  drawLineBlock ({
+    points,
+    x,
+    y,
+    angle,
+    strokeWidth,
+    strokeColor,
+    fillColor
+  }: LineBlock) {
     const { ctx } = this
 
     this.save()
 
-    if (fill) {
-      ctx.fillStyle = fill
-    }
+    ctx.beginPath()
 
-    ctx.fillRect(x, y, w, h)
+    this.rotate(x, y, angle)
 
-    this.restore()
-  }
+    points.forEach((point, index) => {
+      ctx[index === 0 ? 'moveTo' : 'lineTo'](point.x, point.y)
+    })
 
-  drawHeaderBar ({
-    collapsible,
-    language,
-    canCopy,
-    style: {
-      padding: [padTop, padRight, padBottom, padLeft],
-      borderColor,
-      backgroundColor
-    }
-  }: HeaderBar) {
-    const {
-      width,
-      style: { lineHeight },
-      ctx
-    } = this
-    const height = lineHeight + padTop + padBottom
-
-    const collapseWidgetRadius = 6
-
-    this.fillRect(0, 0, width, height, backgroundColor)
-
-    this.drawHeaderBarCollapseWidget(!!collapsible, padLeft, padTop, collapseWidgetRadius)
-
-    if (language?.visible) {
-      this.drawHeaderBarLanguage(language, padLeft + collapseWidgetRadius * 2 + padRight, padTop)
-    }
-
-    if (canCopy) {
-      this.drawHeaderBarCopyWidget(padRight, padTop + lineHeight / 2, backgroundColor)
-    }
-
-    if (borderColor) {
-      ctx.beginPath()
-      ctx.strokeStyle = borderColor
-      ctx.moveTo(0, height)
-      ctx.lineTo(width, height)
-      ctx.closePath()
+    if (strokeColor) {
+      ctx.lineWidth = strokeWidth
+      ctx.strokeStyle = strokeColor
       ctx.stroke()
     }
-  }
 
-  drawHeaderBarCollapseWidget (collapsible: boolean, padLeft: number, padTop: number, r: number) {
-    const {
-      ctx,
-      style: {
-        lineHeight
-      },
-      codeViewer: {
-        collapsed
-      }
-    } = this
-
-    this.save()
-
-    ctx.translate(padLeft + r, padTop + lineHeight / 2)
-    ctx.beginPath()
-    ctx.fillStyle = '#62c655'
-    ctx.arc(0, 0, r, 0, Math.PI * 2)
-    ctx.fill()
-
-    if (collapsible) {
-      if (collapsed) {
-        ctx.beginPath()
-        ctx.moveTo(0, 3 - r)
-        ctx.lineTo(3 - r, -1)
-        ctx.lineTo(r - 3, -1)
-        ctx.closePath()
-        ctx.fillStyle = '#555'
-        ctx.fill()
-
-        ctx.beginPath()
-        ctx.moveTo(0, r - 3)
-        ctx.lineTo(3 - r, 1)
-        ctx.lineTo(r - 3, 1)
-        ctx.closePath()
-        ctx.fillStyle = '#555'
-        ctx.fill()
-      } else {
-        ctx.beginPath()
-        ctx.moveTo(0, -1)
-        ctx.lineTo(3 - r, 3 - r)
-        ctx.lineTo(r - 3, 3 - r)
-        ctx.closePath()
-        ctx.fillStyle = '#555'
-        ctx.fill()
-
-        ctx.beginPath()
-        ctx.moveTo(0, 1)
-        ctx.lineTo(3 - r, r - 3)
-        ctx.lineTo(r - 3, r - 3)
-        ctx.closePath()
-        ctx.fillStyle = '#555'
-        ctx.fill()
-      }
-    } else {
-      ctx.beginPath()
-      ctx.fillStyle = '#333'
-      ctx.arc(0, 0, 1, 0, Math.PI * 2)
+    if (fillColor) {
+      ctx.fillStyle = fillColor
       ctx.fill()
     }
 
     this.restore()
   }
 
-  drawHeaderBarLanguage (language: HeaderBar['language'], x: number, y: number) {
-    const {
-      codeViewer,
-      style
-    } = this
-
-    if (!language) {
-      return
-    }
-
-    this.save()
-    this.translate(x, y)
-
-    this.drawText(codeViewer.language, {
-      ...style,
-      color: language.color,
-      fontSize: language.fontSize
-    })
-
-    this.restore()
-  }
-
-  drawHeaderBarCopyWidget (right: number, y: number, backgroundColor: Color) {
-    const {
-      ctx,
-      width,
-      style: {
-        lineHeight,
-        color
-      },
-      codeViewer: {
-        copyState
-      }
-    } = this
-
-    this.save()
-
-    switch (copyState) {
-      case 'Success':
-      case 'Failure':
-        this.translate(width - right, y - lineHeight / 2)
-        ctx.textAlign = 'right'
-        this.drawText(copyState, {
-          ...this.style,
-          color: copyState === 'Success' ? 'green' : 'red'
-        })
-        break
-
-      case 'Default':
-      default:
-        this.translate(width - right - lineHeight / 2, y)
-
-        ctx.strokeStyle = color
-        ctx.fillStyle = backgroundColor
-
-        ctx.beginPath()
-        ctx.globalAlpha = 0.5
-        ctx.roundRect(-lineHeight / 2, -3, lineHeight / 2 + 3, lineHeight / 2 + 3, 2)
-        ctx.stroke()
-
-        ctx.beginPath()
-        ctx.globalAlpha = 1
-        ctx.fillRect(-5, -lineHeight / 2, lineHeight / 2 + 5, lineHeight / 2 + 5)
-
-        ctx.beginPath()
-        ctx.globalAlpha = 0.5
-        ctx.roundRect(-3, -lineHeight / 2, lineHeight / 2 + 3, lineHeight / 2 + 3, 2)
-        ctx.stroke()
-        ctx.fill()
-        break
-    }
-
-    this.restore()
-  }
-
-  drawLineNumber (
-    {
-      value,
-      width,
-      height,
-      top,
-      left
-    }: LineNumber,
-    { borderColor, padding }: Required<LineNumberStyle>
-  ) {
-    const { ctx, style } = this
-
-    this.save()
-
-    this.translate(left, top)
-
-    this.drawBackground(style.backgroundColor, { width, height })
-    this.drawBorder({
-      ...this.style,
-      borderColor,
-      borderWidth: [0, 1, 0, 0],
-      borderStyle: 'solid',
-      borderRadius: 0
-    }, { width, height })
-
-    ctx.translate(
-      width - (padding ?? 0),
-      0
-    )
-    ctx.textAlign = 'right'
-    this.drawText(value, this.style)
-
-    this.restore()
-  }
-
-  drawText (text: string | number, style: Required<Style>) {
+  drawRectBlock ({
+    x,
+    y,
+    angle,
+    width,
+    height,
+    fillColor,
+    strokeColor,
+    strokeWidth,
+    radii,
+    shadow
+  }: RectangleBlock) {
     const { ctx } = this
 
-    ctx.save()
-    this.setCtxStyle(style)
-    ctx.textBaseline = 'middle'
-    ctx.translate(0, style.lineHeight / 2)
-    ctx.fillText(`${text}`, 0, 0)
-    ctx.restore()
-  }
+    this.save()
 
-  drawBorder (
-    {
-      borderColor,
-      borderWidth,
-      borderStyle,
-      borderRadius
-    }: Required<Style>,
-    {
-      width,
-      height
-    }: Size
-  ) {
-    if (isAllZero(borderWidth) || isAllTransparent(borderColor)) {
-      return
-    }
+    this.rotate(x, y, angle)
 
-    const [topWidth, rightWidth, bottomWidth, leftWidth] = typeof borderWidth === 'number'
-      ? Array(4).fill(borderWidth) as [number, number, number, number]
-      : borderWidth
-    const [topColor, rightColor, bottomColor, leftColor] = !isArray(borderColor)
-      ? Array(4).fill(borderColor) as [Color, Color, Color, Color]
-      : borderColor
-    const [topStyle, rightStyle, bottomStyle, leftStyle] = typeof borderStyle === 'string'
-      ? Array(4).fill(borderStyle) as [BorderStyle, BorderStyle, BorderStyle, BorderStyle]
-      : borderStyle
-
-    this.drawLine([0, 0 + topWidth / 2], [width, 0 + topWidth / 2], topWidth, topStyle, topColor, borderRadius, 'top')
-    this.drawLine([width - rightWidth / 2, 0], [width - rightWidth / 2, height], rightWidth, rightStyle, rightColor, borderRadius, 'right')
-    this.drawLine([width, height - bottomWidth / 2], [0, height - bottomWidth / 2], bottomWidth, bottomStyle, bottomColor, borderRadius, 'bottom')
-    this.drawLine([0 + leftWidth / 2, height], [0 + leftWidth / 2, 0], leftWidth, leftStyle, leftColor, borderRadius, 'left')
-  }
-
-  drawLine (
-    [x1, y1]: [number, number],
-    [x2, y2]: [number, number],
-    lineWidth: number,
-    lineStyle: BorderStyle,
-    lineColor: Color,
-    borderRadius = 0,
-    ori: 'top' | 'right' | 'bottom' | 'left' = 'top'
-  ) {
-    if (isAllZero(lineWidth) || isAllTransparent(lineColor)) {
-      return
-    }
-
-    const { ctx } = this
-
-    ctx.save()
     ctx.beginPath()
-    ctx.strokeStyle = lineColor
-    ctx.fillStyle = 'transparent'
-    ctx.lineWidth = lineWidth
 
-    switch (lineStyle) {
-      case 'dashed':
-        ctx.setLineDash([4])
-        break
-      case 'dotted':
-        ctx.setLineDash([1])
-        break
-      case 'solid':
-      default:
-        ctx.setLineDash([])
-        break
+    if (shadow) {
+      this.setShadow(shadow)
     }
 
-    if (!borderRadius) {
-      ctx.moveTo(x1, y1)
-      ctx.lineTo(x2, y2)
-    } else {
-      ctx.lineJoin = 'round'
-      switch (ori) {
-        case 'top':
-          ctx.moveTo(x1, y1 + borderRadius)
-          ctx.quadraticCurveTo(x1, y1, x1 + borderRadius, y1)
-          ctx.lineTo(x2 - borderRadius, y2)
-          ctx.quadraticCurveTo(x2, y2, x2, y2 + borderRadius)
-          break
-        case 'bottom':
-          ctx.moveTo(x1, y1 - borderRadius)
-          ctx.quadraticCurveTo(x1, y1, x1 - borderRadius, y1)
-          ctx.lineTo(x2 + borderRadius, y2)
-          ctx.quadraticCurveTo(x2, y2, x2, y2 - borderRadius)
-          break
-        case 'right':
-          ctx.moveTo(x1 - borderRadius, y1)
-          ctx.quadraticCurveTo(x1, y1, x1, y1 + borderRadius)
-          ctx.lineTo(x2, y2 - borderRadius)
-          ctx.quadraticCurveTo(x2, y2, x2 - borderRadius, y2)
-          break
-        case 'left':
-          ctx.moveTo(x1 + borderRadius, y1)
-          ctx.quadraticCurveTo(x1, y1, x1, y1 - borderRadius)
-          ctx.lineTo(x2, y2 + borderRadius)
-          ctx.quadraticCurveTo(x2, y2, x2 + borderRadius, y2)
-          break
-      }
-    }
-    ctx.stroke()
+    ctx.roundRect(-width / 2, -height / 2, width, height, radii)
 
-    ctx.closePath()
-    ctx.restore()
+    if (fillColor) {
+      ctx.fillStyle = fillColor
+      ctx.fill()
+    }
+    if (strokeColor) {
+      ctx.strokeStyle = strokeColor
+      ctx.lineWidth = strokeWidth
+      ctx.stroke()
+    }
+
+    this.restore()
+  }
+
+  drawCircleBlock ({
+    x,
+    y,
+    angle,
+    fillColor,
+    strokeColor,
+    strokeWidth,
+    radius,
+    shadow
+  }: CircleBlock) {
+    const { ctx } = this
+
+    this.save()
+
+    ctx.beginPath()
+
+    if (shadow) {
+      this.setShadow(shadow)
+    }
+
+    ctx.rotate(angle * Math.PI / 180)
+
+    ctx.arc(x, y, radius, 0, Math.PI * 2)
+
+    if (fillColor) {
+      ctx.fillStyle = fillColor
+      ctx.fill()
+    }
+    if (strokeColor) {
+      ctx.strokeStyle = strokeColor
+      ctx.lineWidth = strokeWidth
+      ctx.stroke()
+    }
+
+    this.restore()
   }
 
   drawBackground (color: Color, { width, height }: Size, radii = 0) {
@@ -577,9 +384,6 @@ export default class Renderer {
       codeViewer: {
         headerBar
       },
-      style: {
-        lineHeight
-      },
       width
     } = this
 
@@ -591,10 +395,10 @@ export default class Renderer {
       } = headerBar
       if (headerBar.canCopy) {
         const [x1, y1, x2, y2] = [
-          width - right - lineHeight,
+          width - right - DEFAULT_COPY_BUTTON.width,
           top,
           width - right,
-          top + lineHeight
+          top + DEFAULT_COPY_BUTTON.height
         ]
         if (x >= x1 && x <= x2 && y >= y1 && y <= y2) {
           return 'btn-copy'
@@ -604,8 +408,8 @@ export default class Renderer {
         const [x1, y1, x2, y2] = [
           left,
           top,
-          left + 12,
-          top + 12
+          left + DEFAULT_COLLAPSE_BUTTON.width,
+          top + DEFAULT_COLLAPSE_BUTTON.height
         ]
         if (x >= x1 && x <= x2 && y >= y1 && y <= y2) {
           return 'btn-collapse'
@@ -618,6 +422,17 @@ export default class Renderer {
 
   translate (x: number, y: number) {
     this.ctx.translate(x, y)
+  }
+
+  /**
+   * set ctx rotate
+   * @param x - center x
+   * @param y - center y
+   * @param angle - degree
+   */
+  rotate (x: number, y: number, angle = 0) {
+    this.translate(x, y)
+    this.ctx.rotate(angle * Math.PI / 180)
   }
 
   save () {
