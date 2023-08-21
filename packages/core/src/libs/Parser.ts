@@ -19,8 +19,6 @@ export interface InlineItem {
   content: string
   style: Required<Style>
   size: Size
-  left: number
-  top: number
   scope?: string
 }
 
@@ -30,13 +28,11 @@ export interface LineNumber {
   width: number
   height: number
   left: number
-  top: number
 }
 
 export interface Row extends Size {
   lineNumber: LineNumber
   children: InlineItem[]
-  top: number
 }
 
 const flatScopeDataList = (
@@ -52,114 +48,203 @@ const flatScopeDataList = (
   }, [])
 }
 
-const parseRow = (
+const rowsToBlocks = (
   codeViewer: CodeViewer,
   rows: Row[]
-): Row[] => {
-  if (rows.length === 0) return rows
+): Block[] => {
+  if (rows.length === 0) return []
 
   const {
     breakRow,
     displayLineNumber,
-    lineNumberStyle,
-    width: w,
+    headerBar,
+    width,
     style: {
+      padding: [padTop, padRight, , padLeft],
       lineHeight,
-      padding
+      fontSize,
+      fontStyle,
+      fontWeight
     },
-    headerBar
+    lineNumberStyle
   } = codeViewer
 
-  const maxWidth = w - (padding[1] ?? 0) - (padding[3] ?? 0)
+  const maxContentWidth = breakRow
+    ? width - (padRight ?? 0) - (padLeft ?? 0)
+    : Infinity
 
-  let left = 0
-  let top = headerBar.visible
-    ? headerBar.style.padding[0] + headerBar.style.padding[3] + lineHeight
+  const maxLineNumber = Math.max.apply(null, rows.map(({ lineNumber }) => lineNumber.value))
+  const lineNumberWidth = displayLineNumber
+    ? (lineNumberStyle.padding ?? 0) * 2 + getTextSize(`${maxLineNumber}`, rows[0].children[0].style).width
     : 0
 
-  const maxNumber = Math.max.apply(null, rows.map(({ lineNumber }) => lineNumber.value))
-  const { width } = getTextSize(`${maxNumber}`, { ...rows[0].children[0].style })
-  const lineNumberWidth = (
-    // padding-left
-    (lineNumberStyle.padding ?? 0) +
-    // max line number width
-    width +
-    // padding-right
-    (lineNumberStyle.padding ?? 0)
+  const baseLeft = lineNumberWidth + (padLeft ?? 0)
+  let baseTop = (padTop ?? 0) + (
+    headerBar.visible
+      ? (headerBar.style.padding[0] ?? 0) + (headerBar.style.padding[2] ?? 0) + lineHeight
+      : 0
   )
 
-  return rows.map(row => {
-    row.top = top
-    row.height = lineHeight
+  const blocks: Block[] = []
 
-    left += displayLineNumber ? lineNumberWidth : 0
-
-    const children = [...row.children]
-    let item: InlineItem
-    let itemTop = 0
+  rows.forEach(({ lineNumber, children: _children }) => {
+    const children = [..._children]
+    let left = 0
+    let top = 0
 
     for (let i = 0; i < children.length; i++) {
-      item = children[i]
+      const {
+        content,
+        style: itemStyle,
+        size: {
+          width: itemWidth,
+          height: itemHeight
+        }
+      } = children[i]
 
-      const { content, style, size: { width } } = item
-      const remainingWidth = maxWidth - (left + width)
+      const {
+        textAlign,
+        textBaseLine,
+        fontSize,
+        fontWeight,
+        fontStyle,
+        color
+      } = itemStyle
+      const remainingWidth = maxContentWidth - baseLeft - itemWidth - left
 
-      if (breakRow && remainingWidth < 0) {
-        // If the next render is going to be out of range,
-        // first render part of the content that is sufficient to render,
-        // and then move the rest to the next item.
-
-        const idx = getMaxRenderIndex(content, style, remainingWidth + width)
+      // If the next render is going to be out of range,
+      // first render part of the content that is sufficient to render,
+      // and then move the remaining content to the next item.
+      if (remainingWidth < 0) {
+        const idx = getMaxRenderIndex(content, itemStyle, remainingWidth + itemWidth)
 
         const newContent = content.slice(0, idx)
         const nextContent = content.slice(idx)
 
-        children.splice(i, 1, {
-          ...item,
-          left,
-          top: itemTop,
-          content: newContent
-        }, {
-          ...item,
-          left,
-          top: itemTop + lineHeight,
+        const newContentWidth = getTextSize(newContent, itemStyle).width
+
+        blocks.push(
+          createBlock(BlockType.TEXT, {
+            x: baseLeft + left + newContentWidth / 2,
+            y: baseTop + top + itemHeight / 2,
+            width: getTextSize(newContent, itemStyle).width,
+            height: itemHeight,
+            z: 0,
+            angle: 0,
+            fixed: Fixed.UNSET,
+            opacity: 1,
+            shadow: undefined,
+            text: newContent,
+            textAlign,
+            textBaseLine,
+            fontSize,
+            fontWeight,
+            fontStyle,
+            lineHeight,
+            fillColor: color,
+            strokeColor: 'transparent'
+          })
+        )
+
+        top += lineHeight
+        left = 0
+
+        children.splice(i, 1, null as unknown as any, {
+          ...children[i],
+          size: getTextSize(nextContent, itemStyle),
           content: nextContent
         })
-
-        // reset left
-        left = displayLineNumber ? lineNumberWidth : 0
-        top += lineHeight
-        itemTop += lineHeight
-        row.height += lineHeight
       } else {
-        item.left = left
-        item.top = itemTop
+        blocks.push(createBlock(BlockType.TEXT, {
+          x: baseLeft + left + itemWidth / 2,
+          y: baseTop + top + itemHeight / 2,
+          width: itemWidth,
+          height: itemHeight,
+          z: 0,
+          angle: 0,
+          fixed: Fixed.UNSET,
+          opacity: 1,
+          shadow: undefined,
+          text: content,
+          textAlign,
+          textBaseLine,
+          fontSize,
+          fontWeight,
+          fontStyle,
+          lineHeight,
+          fillColor: color,
+          strokeColor: 'transparent'
+        }))
 
-        // set left
-        left += width
+        left += itemWidth
       }
     }
-    left = 0
-    top += lineHeight
 
-    const childrenWidth = children.reduce((acc, { size: { width } }) => acc + width, 0)
-    const rowLineNumberWidth = lineNumberWidth
-    return {
-      ...row,
-      lineNumber: {
-        ...row.lineNumber,
-        display: displayLineNumber,
-        width: rowLineNumberWidth,
-        height: row.height,
-        top: row.top,
-        left: 0
-      },
-      width: breakRow
-        ? Math.min(maxWidth, childrenWidth + (displayLineNumber ? rowLineNumberWidth : 0))
-        : childrenWidth + (displayLineNumber ? rowLineNumberWidth : 0),
-      children
+    if (displayLineNumber) {
+      const lineNumberHeight = top + lineHeight
+
+      blocks.push(createBlock(BlockType.GROUP, {
+        x: lineNumberWidth / 2,
+        y: baseTop + lineNumberHeight / 2,
+        z: 1,
+        angle: 0,
+        width: lineNumberWidth,
+        height: lineNumberHeight,
+        fixed: Fixed.LEFT,
+        opacity: 1,
+        shadow: undefined,
+        children: [
+          ...lineNumberStyle.backgroundColor !== 'transparent'
+            ? [createBlock(BlockType.RECTANGLE, {
+                x: 0,
+                y: 0,
+                z: 1,
+                angle: 0,
+                width: lineNumberWidth,
+                height: lineNumberHeight,
+                fillColor: lineNumberStyle.backgroundColor
+              })]
+            : [],
+          createBlock(BlockType.TEXT, {
+            x: 0,
+            y: -(lineNumberHeight - lineHeight) / 2,
+            angle: 0,
+            width: lineNumberWidth - (lineNumberStyle.padding ?? 0) * 2,
+            height: lineNumberHeight,
+            text: `${lineNumber.value}`,
+            textAlign: 'right',
+            textBaseLine: 'middle',
+            fontSize,
+            fontStyle,
+            fontWeight,
+            lineHeight,
+            fillColor: lineNumberStyle.color,
+            strokeColor: undefined
+          }),
+          createBlock(BlockType.LINE, {
+            x: lineNumberWidth / 2,
+            y: 0,
+            width: 1,
+            height: lineNumberHeight,
+            points: [{
+              x: 0,
+              y: -lineNumberHeight / 2
+            }, {
+              x: 0,
+              y: lineNumberHeight / 2
+            }],
+            strokeColor: lineNumberStyle.borderColor
+          })
+        ]
+      }))
     }
+
+    baseTop += top + lineHeight
+    left = 0
+    top = 0
   })
+
+  return blocks
 }
 
 const mergeData = (
@@ -173,7 +258,6 @@ const mergeData = (
 
   const pushRow = (children: InlineItem[]) => {
     rows.push({
-      top: 0,
       width: 0,
       height: 0,
       lineNumber: {
@@ -181,8 +265,7 @@ const mergeData = (
         value: lineNumber++,
         width: 0,
         height: 0,
-        left: 0,
-        top: 0
+        left: 0
       },
       children
     })
@@ -193,14 +276,14 @@ const mergeData = (
 
     if (LF_REGEX.test(content)) {
       splitLF(content).forEach((item, index, sourceArr) => {
-        children.push({
-          scope,
-          content: item,
-          style: currentStyle,
-          size: getTextSize(item, currentStyle),
-          left: 0,
-          top: 0
-        })
+        if (item) {
+          children.push({
+            scope,
+            content: item,
+            style: currentStyle,
+            size: getTextSize(item, currentStyle)
+          })
+        }
 
         if (sourceArr[index + 1] !== undefined) {
           pushRow(children)
@@ -213,9 +296,7 @@ const mergeData = (
         scope,
         content,
         style: currentStyle,
-        size: getTextSize(content, currentStyle),
-        left: 0,
-        top: 0
+        size: getTextSize(content, currentStyle)
       })
     }
   })
@@ -227,122 +308,6 @@ const mergeData = (
   return rows
 }
 
-const convertToBlock = (codeViewer: CodeViewer, rows: Row[]) => {
-  const {
-    style: {
-      lineHeight,
-      fontSize,
-      fontStyle,
-      fontWeight,
-      padding: [, , , left]
-    },
-    lineNumberStyle
-  } = codeViewer
-
-  const blocks: Block[] = []
-  // convert children
-  rows.forEach(({ children, lineNumber, top }) => {
-    children.forEach(item => {
-      const {
-        size: {
-          width,
-          height
-        },
-        content,
-        style: {
-          textAlign,
-          textBaseLine,
-          fontSize,
-          fontWeight,
-          fontStyle,
-          color
-        }
-      } = item
-      blocks.push(createBlock(BlockType.TEXT, {
-        x: item.left + left + width / 2,
-        y: item.top + top + height / 2,
-        width,
-        height,
-        z: 0,
-        angle: 0,
-        fixed: Fixed.UNSET,
-        opacity: 1,
-        shadow: undefined,
-        text: content,
-        textAlign,
-        textBaseLine,
-        fontSize,
-        fontWeight,
-        fontStyle,
-        lineHeight,
-        fillColor: color,
-        strokeColor: 'transparent'
-      }))
-    })
-
-    // cover line number
-    if (lineNumber.display) {
-      blocks.push(createBlock(BlockType.GROUP, {
-        x: lineNumber.width / 2,
-        y: lineNumber.top + lineHeight / 2,
-        z: 1,
-        angle: 0,
-        width: lineNumber.width,
-        height: lineNumber.height,
-        fixed: Fixed.LEFT,
-        opacity: 1,
-        shadow: undefined,
-        children: [
-          createBlock(BlockType.TEXT, {
-            x: 0,
-            y: 0,
-            angle: 0,
-            width: lineNumber.width - (lineNumberStyle.padding ?? 0) * 2,
-            height: lineNumber.height,
-            text: `${lineNumber.value}`,
-            textAlign: 'right',
-            textBaseLine: 'middle',
-            fontSize,
-            fontStyle,
-            fontWeight,
-            lineHeight,
-            fillColor: lineNumberStyle.color,
-            strokeColor: undefined
-          }),
-          createBlock(BlockType.LINE, {
-            x: lineNumber.width / 2,
-            y: 0,
-            width: 1,
-            height: lineNumber.height,
-            points: [{
-              x: 0,
-              y: -lineNumber.height / 2
-            }, {
-              x: 0,
-              y: lineNumber.height / 2
-            }],
-            strokeColor: lineNumberStyle.borderColor
-          })
-        ]
-      }))
-    }
-  })
-
-  return blocks
-}
-
-/**
- * Parse content
- * @param content - code string
- * @param language - code language
- * @param breakRow - whether to break the line
- * @param displayLineNumber - whether to display the line number
- * @param lineNumberStyle - line number style
- * @param maxWidth - max render width
- * @param lineHeight - line height
- * @param headerBar - header bar setting
- * @param getScopeStyle - get scope style
- */
 export const parseContent = (
   content: string,
   language = 'PlainText',
@@ -355,18 +320,17 @@ export const parseContent = (
   )._emitter.rootNode.children as ScopeData[]
 
   return compose<any>(
-    toCurry<any>(convertToBlock)(codeViewer),
-    toCurry<any>(parseRow)(codeViewer),
+    toCurry<any>(rowsToBlocks)(codeViewer),
     toCurry<any>(mergeData)(codeViewer.getScopeStyle.bind(codeViewer)),
     flatScopeDataList
   )(scopeDataList)
 }
 
 export const parseHeaderBar = (codeViewer: CodeViewer) => {
-  const blocks: Block[] = []
+  const children: Block[] = []
 
   const {
-    width,
+    width: codeViewerWidth,
     headerBar: {
       visible,
       collapsible,
@@ -384,11 +348,10 @@ export const parseHeaderBar = (codeViewer: CodeViewer) => {
 
   if (visible) {
     // bg
-    blocks.push(createBlock(BlockType.RECTANGLE, {
-      x: width / 2,
-      y: height / 2,
-      z: 1,
-      width,
+    children.push(createBlock(BlockType.RECTANGLE, {
+      x: 0,
+      y: 0,
+      width: codeViewerWidth,
       height,
       radii: borderRadius,
       fillColor: style.backgroundColor
@@ -405,12 +368,11 @@ export const parseHeaderBar = (codeViewer: CodeViewer) => {
         triangleFillColor
       } = DEFAULT_COLLAPSE_BUTTON
 
-      blocks.push(createBlock(BlockType.GROUP, {
-        x: (style.padding.at(-1) ?? 0) + radius,
-        y: (style.padding[0] ?? 0) + lineHeight / 2,
+      children.push(createBlock(BlockType.GROUP, {
+        x: -codeViewerWidth / 2 + (style.padding.at(-1) ?? 0) + radius,
+        y: 0,
         width,
         height,
-        z: 2,
         angle: 45,
         children: [
           createBlock(BlockType.CIRCLE, {
@@ -516,10 +478,10 @@ export const parseHeaderBar = (codeViewer: CodeViewer) => {
 
     // language
     if (language?.visible) {
-      blocks.push(createBlock(BlockType.TEXT, {
-        x: width / 2,
-        y: (style.padding[0] ?? 0) + lineHeight / 2,
-        width,
+      children.push(createBlock(BlockType.TEXT, {
+        x: 0,
+        y: 0,
+        width: codeViewerWidth,
         height,
         text: `${codeViewer.language}`,
         textAlign: 'center',
@@ -533,9 +495,10 @@ export const parseHeaderBar = (codeViewer: CodeViewer) => {
       switch (codeViewer.copyState) {
         case 'Failure':
         case 'Success':
-          blocks.push(createBlock(BlockType.TEXT, {
-            x: width - (style.padding[1] ?? 0) - DEFAULT_COPY_BUTTON.width / 2,
-            y: (style.padding[0] ?? 0) + lineHeight / 2,
+          children.push(createBlock(BlockType.TEXT, {
+            x: codeViewerWidth / 2 - (style.padding[1] ?? 0) - DEFAULT_COPY_BUTTON.width / 2,
+            y: 0,
+            fixed: Fixed.BOTH,
             width: DEFAULT_COPY_BUTTON.width,
             height: DEFAULT_COPY_BUTTON.height,
             text: codeViewer.copyState,
@@ -548,9 +511,10 @@ export const parseHeaderBar = (codeViewer: CodeViewer) => {
           break
         case 'Default':
         default:
-          blocks.push(createBlock(BlockType.GROUP, {
-            x: width - (style.padding[1] ?? 0) - DEFAULT_COPY_BUTTON.width / 2,
-            y: (style.padding[0] ?? 0) + lineHeight / 2,
+          children.push(createBlock(BlockType.GROUP, {
+            x: codeViewerWidth / 2 - (style.padding[1] ?? 0) - DEFAULT_COPY_BUTTON.width / 2,
+            y: 0,
+            fixed: Fixed.BOTH,
             width: DEFAULT_COPY_BUTTON.width,
             height: DEFAULT_COPY_BUTTON.height,
             children: [
@@ -588,18 +552,19 @@ export const parseHeaderBar = (codeViewer: CodeViewer) => {
     }
 
     // border
-    blocks.push(createBlock(BlockType.LINE, {
-      x: width / 2,
-      y: height,
-      width,
+    children.push(createBlock(BlockType.LINE, {
+      x: 0,
+      y: height / 2,
+      fixed: Fixed.BOTH,
+      width: codeViewerWidth,
       height: 1,
       points: [
         {
-          x: -width / 2 + (codeViewer.collapsed ? typeof borderRadius === 'number' ? borderRadius : 0 : 0),
+          x: -codeViewerWidth / 2 + (codeViewer.collapsed ? typeof borderRadius === 'number' ? borderRadius : 0 : 0),
           y: 0
         },
         {
-          x: width / 2 - (codeViewer.collapsed ? typeof borderRadius === 'number' ? borderRadius : 0 : 0),
+          x: codeViewerWidth / 2 - (codeViewer.collapsed ? typeof borderRadius === 'number' ? borderRadius : 0 : 0),
           y: 0
         }
       ],
@@ -608,5 +573,15 @@ export const parseHeaderBar = (codeViewer: CodeViewer) => {
     }))
   }
 
-  return blocks
+  return [
+    createBlock(BlockType.GROUP, {
+      x: codeViewerWidth / 2,
+      y: height / 2,
+      z: 8,
+      fixed: Fixed.BOTH,
+      width: codeViewerWidth,
+      height,
+      children
+    })
+  ]
 }

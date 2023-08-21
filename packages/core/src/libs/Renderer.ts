@@ -1,6 +1,6 @@
 import { type Style, DEFAULT_COPY_BUTTON, DEFAULT_COLLAPSE_BUTTON } from '../config/defaultSetting'
 import type { Color, Coordinate, Shadow } from '../types'
-import { type Block, BlockType, type TextBlock, type LineBlock, type RectangleBlock, type CircleBlock, type GroupBlock } from './Block'
+import { type Block, BlockType, type TextBlock, type LineBlock, type RectangleBlock, type CircleBlock, type GroupBlock, Fixed } from './Block'
 import type CodeViewer from './CodeViewer'
 import { type Size } from './Measure'
 import { ScrollBarType } from './ScrollBar'
@@ -71,6 +71,34 @@ export default class Renderer {
     ctx.globalAlpha = Math.min(1, Math.max(0, opacity))
   }
 
+  setPositionFixed ({
+    fixed
+  }: Block) {
+    const {
+      codeViewer: {
+        scrollState: {
+          x,
+          y
+        }
+      }
+    } = this
+
+    switch (fixed) {
+      case Fixed.BOTH:
+        this.translate(0, 0)
+        break
+      case Fixed.LEFT:
+        this.translate(0, -y)
+        break
+      case Fixed.RIGHT:
+        // @todo
+        break
+      default:
+        this.translate(-x, -y)
+        break
+    }
+  }
+
   setShadow ({
     color,
     blur,
@@ -89,7 +117,11 @@ export default class Renderer {
     this.clear()
 
     blocks.forEach(block => {
+      this.save()
+      this.setPositionFixed(block)
+
       this.renderBlock(block)
+      this.restore()
     })
   }
 
@@ -113,8 +145,6 @@ export default class Renderer {
       default:
         break
     }
-
-    this.restore()
   }
 
   renderGroupBlock (block: GroupBlock) {

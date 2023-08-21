@@ -33,6 +33,7 @@ export interface LineNumberStyle {
   color?: Color
   borderColor?: Color
   borderFocusColor?: Color
+  backgroundColor?: Color
   padding?: number
 }
 
@@ -166,6 +167,7 @@ export const DEFAULT_SELECT_STYLE: Style = {
 export const DEFAULT_LINE_NUMBER_STYLE: Required<LineNumberStyle> = {
   color: '#a1a1a1',
   borderColor: '#c1c1c1',
+  backgroundColor: '#f6f6f6',
   borderFocusColor: '#c1c1c1',
   padding: DEFAULT_PADDING
 }
