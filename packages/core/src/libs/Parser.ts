@@ -424,26 +424,26 @@ export const parseHeaderBar = (codeViewer: CodeViewer) => {
           }),
           createBlock(BlockType.LINE, {
             x: 0,
-            y: -3,
-            width: 6,
-            height: 4,
-            points: codeViewer.collapsed
+            y: -radius / 2,
+            width: radius / 2,
+            height: radius - 2,
+            points: !codeViewer.collapsed
               ? [
                   {
                     x: 0,
-                    y: 2
+                    y: radius / 3
                   },
                   {
-                    x: -3,
+                    x: -radius / 2,
                     y: -1
                   },
                   {
-                    x: 3,
+                    x: radius / 2,
                     y: -1
                   },
                   {
                     x: 0,
-                    y: 2
+                    y: radius / 3
                   }
                 ]
               : [
@@ -452,12 +452,12 @@ export const parseHeaderBar = (codeViewer: CodeViewer) => {
                     y: -1
                   },
                   {
-                    x: -3,
-                    y: 2
+                    x: -radius / 2,
+                    y: radius / 3
                   },
                   {
-                    x: 3,
-                    y: 2
+                    x: radius / 2,
+                    y: radius / 3
                   },
                   {
                     x: 0,
@@ -468,26 +468,26 @@ export const parseHeaderBar = (codeViewer: CodeViewer) => {
           }),
           createBlock(BlockType.LINE, {
             x: 0,
-            y: 3,
-            width: 6,
-            height: 4,
-            points: codeViewer.collapsed
+            y: radius / 2,
+            width: radius / 2,
+            height: radius - 2,
+            points: !codeViewer.collapsed
               ? [
                   {
                     x: 0,
-                    y: -2
+                    y: -radius / 3
                   },
                   {
-                    x: -3,
+                    x: -radius / 2,
                     y: 1
                   },
                   {
-                    x: 3,
+                    x: radius / 2,
                     y: 1
                   },
                   {
                     x: 0,
-                    y: -2
+                    y: -radius / 3
                   }
                 ]
               : [
@@ -496,12 +496,12 @@ export const parseHeaderBar = (codeViewer: CodeViewer) => {
                     y: 1
                   },
                   {
-                    x: -3,
-                    y: -2
+                    x: -radius / 2,
+                    y: -radius / 3
                   },
                   {
-                    x: 3,
-                    y: -2
+                    x: radius / 2,
+                    y: -radius / 3
                   },
                   {
                     x: 0,

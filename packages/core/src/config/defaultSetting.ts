@@ -210,11 +210,11 @@ export const DEFAULT_HEADER_BAR_DARK: HeaderBar = {
 }
 
 export const DEFAULT_COLLAPSE_BUTTON = {
-  radius: 6,
-  width: 12,
-  height: 12,
+  radius: 7,
+  width: 14,
+  height: 14,
   fillColor: '#62c655',
-  strokeColor: '#444',
+  strokeColor: '#666',
   triangleFillColor: '#296218'
 }
 
