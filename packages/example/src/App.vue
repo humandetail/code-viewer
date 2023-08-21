@@ -30,19 +30,30 @@ import { ref, onMounted } from 'vue'
 import { CodeViewer, listLanguages } from '@humandetail/code-viewer'
 
 const languages = listLanguages()
-const lang = ref('javascript')
-const code = ref('const a = 1\nconst b = 2\nconsole.log(a + b) // 3')
+const lang = ref('typescript')
+const code = ref(`const a = 1
+const b = 2
+console.log(a + b) // 3
+
+const helloWorld = (hello: string, world: string): string => hello + ' ' + world + '.'
+
+helloWorld('Hello', 'World') // Hello World
+
+helloWorld('Java', 'Script') // Java Script
+
+console.log('JavaScript')
+// JavaScript`)
 
 const containerRef = ref()
 
 const cv = new CodeViewer({
   content: code.value,
   language: lang.value,
-  width: 800,
-  height: 600,
+  width: 400,
+  height: 200,
   breakRow: false,
   overflowX: 'scroll',
-  overflowY: 'auto',
+  overflowY: 'scroll',
   themeMode: 'light'
 }, {
   style: {

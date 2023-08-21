@@ -33,6 +33,7 @@ export interface LineNumberStyle {
   color?: Color
   borderColor?: Color
   borderFocusColor?: Color
+  backgroundColor?: Color
   padding?: number
 }
 
@@ -166,6 +167,7 @@ export const DEFAULT_SELECT_STYLE: Style = {
 export const DEFAULT_LINE_NUMBER_STYLE: Required<LineNumberStyle> = {
   color: '#a1a1a1',
   borderColor: '#c1c1c1',
+  backgroundColor: '#f6f6f6',
   borderFocusColor: '#c1c1c1',
   padding: DEFAULT_PADDING
 }
@@ -210,11 +212,11 @@ export const DEFAULT_HEADER_BAR_DARK: HeaderBar = {
 }
 
 export const DEFAULT_COLLAPSE_BUTTON = {
-  radius: 6,
-  width: 12,
-  height: 12,
+  radius: 7,
+  width: 14,
+  height: 14,
   fillColor: '#62c655',
-  strokeColor: '#444',
+  strokeColor: '#666',
   triangleFillColor: '#296218'
 }
 

@@ -5,11 +5,12 @@
 import { DEFAULT_HEADER_BAR, DEFAULT_LINE_NUMBER_STYLE, DEFAULT_SELECT_STYLE, DEFAULT_STYLE, DEFAULT_SCOPE_STYLES, type Style, type ScopeStyles, DEFAULT_HEADER_BAR_DARK } from '../config/defaultSetting'
 import { deepMergeObject, getMouseCoordinate, isEmptyObject, isString } from '../utils/tools'
 import Renderer from './Renderer'
-import { type Row, parseContent, parseHeaderBar } from './Parser'
+import { parseContent, parseHeaderBar } from './Parser'
 import ScrollBar, { ScrollBarType } from './ScrollBar'
 import { type Coordinate } from '../types'
 import { type CodeViewerTheme, lightTheme, darkTheme } from '../themes'
-import { createBlock, type Block, BlockType } from './Block'
+import { createBlock, type Block, BlockType, Fixed } from './Block'
+import type { Size } from './Measure'
 
 type Overflow = 'auto' | 'hidden' | 'scroll'
 
@@ -56,6 +57,7 @@ export default class CodeViewer {
   /** is collapsed */
   collapsed = false
   copyState: 'Default' | 'Success' | 'Failure' = 'Default'
+  scrollState: Coordinate = { x: 0, y: 0 }
 
   // If overflowX is `auto` and breakRow is false.
   // The canvas width will follow the maximum width of the row.
@@ -68,7 +70,6 @@ export default class CodeViewer {
 
   #isMounted = false
 
-  #rows: Row[] = []
   #headerBarBlocks: Block[] = []
   #blocks: Block[] = []
 
@@ -84,7 +85,7 @@ export default class CodeViewer {
 
     this.setTheme(theme, options.themeMode)
 
-    this.updateRows()
+    this.updateBlocks()
 
     this.renderer = new Renderer(
       this.style,
@@ -110,6 +111,94 @@ export default class CodeViewer {
     return width - right
   }
 
+  get viewportSize (): Size {
+    const {
+      width,
+      height,
+      collapsed,
+      style: {
+        lineHeight
+      },
+      headerBar: {
+        style: {
+          padding: [padTop, , padBottom]
+        }
+      }
+    } = this
+
+    return {
+      width,
+      height: collapsed
+        ? lineHeight + padTop + padBottom
+        : height
+    }
+  }
+
+  get viewportBlocks (): Block[] {
+    const {
+      viewportSize: {
+        width,
+        height
+      },
+      scrollState: {
+        x,
+        y
+      }
+    } = this
+
+    const blocks = [
+      ...this.#blocks.filter(block => {
+        return block.fixed !== Fixed.UNSET || !(
+          (block.x + block.width - x) < 0 ||
+          (block.x - x) > width ||
+          (block.y + block.height - y) < 0 ||
+          (block.y - y) > height
+        )
+      }),
+      ...this.#headerBarBlocks
+    ]
+
+    const {
+      style: {
+        backgroundColor,
+        borderRadius,
+        borderWidth,
+        borderColor
+      }
+    } = this
+
+    // add bg Block
+    blocks.unshift(createBlock(BlockType.RECTANGLE, {
+      x: width / 2,
+      y: height / 2,
+      z: -1,
+      fixed: Fixed.BOTH,
+      width,
+      height,
+      radii: borderRadius,
+      fillColor: backgroundColor,
+      strokeColor: 'transparent'
+    }))
+
+    // add border block
+    if (borderWidth > 0 && borderColor && borderColor !== 'transparent') {
+      blocks.push(createBlock(BlockType.RECTANGLE, {
+        x: width / 2,
+        y: height / 2,
+        z: 9,
+        fixed: Fixed.BOTH,
+        width,
+        height,
+        radii: borderRadius,
+        fillColor: 'transparent',
+        strokeWidth: borderWidth,
+        strokeColor: borderColor
+      }))
+    }
+
+    return blocks.sort((a, b) => a.z - b.z)
+  }
+
   #init (initEvent = true) {
     const {
       breakRow,
@@ -127,10 +216,16 @@ export default class CodeViewer {
     let newHeight = height
 
     // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-    const actualWidth = this.actualWidth = Math.max.apply(null, this.#blocks.map(({ x, width }) => x + width)) + (right ?? 0)
+    const actualWidth = this.actualWidth = Math.max.apply(null, this.#blocks.map(({ x, width }) => x + width / 2)) + (right ?? 0)
 
     // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
-    const actualHeight = this.actualHeight = Math.max.apply(null, this.#blocks.map(({ y, height }) => y + height)) + (bottom ?? 0)
+    const actualHeight = this.actualHeight = Math.max.apply(null, this.#blocks.map(({ y, height }) => y + height / 2)) + (bottom ?? 0)
+
+    console.log({
+      actualWidth,
+      actualHeight,
+      blocks: this.#blocks
+    })
 
     this.horizontalScrollBar = new ScrollBar(renderer, {
       type: ScrollBarType.horizontal,
@@ -174,6 +269,7 @@ export default class CodeViewer {
     if (newWidth !== width || newHeight !== height) {
       this.width = newWidth
       this.height = newHeight
+      this.#headerBarBlocks = parseHeaderBar(this)
       this.renderer.init(newWidth, newHeight)
     }
 
@@ -215,6 +311,10 @@ export default class CodeViewer {
         break
       case 'collapsed':
         this.#headerBarBlocks = parseHeaderBar(this)
+        this.render()
+        break
+      case 'scrollState':
+        this.scrollState = state as Coordinate
         this.render()
         break
       default:
@@ -269,7 +369,7 @@ export default class CodeViewer {
       this.language = language
     }
 
-    this.updateRows()
+    this.updateBlocks()
     /** @todo */
     this.#init(false)
 
@@ -286,7 +386,7 @@ export default class CodeViewer {
     this.afterRender()
   }
 
-  updateRows () {
+  updateBlocks () {
     if (this.content) {
       const {
         width,
@@ -322,61 +422,18 @@ export default class CodeViewer {
       throw new Error('Make sure the `mount()` method is called first.')
     }
 
-    const blocks = [...this.#headerBarBlocks, ...this.#blocks]
-
-    // add bg Block
     const {
-      width,
-      height,
-      collapsed,
-      style: {
-        borderRadius,
-        borderColor,
-        lineHeight,
-        borderWidth,
-        backgroundColor
+      renderer,
+      viewportSize: {
+        width,
+        height
       },
-      headerBar: {
-        style: {
-          padding: [padTop, , padBottom]
-        }
-      },
-      renderer
+      viewportBlocks
     } = this
 
-    const w = width
-    let h = height
+    renderer.init(width, height)
 
-    if (collapsed) {
-      h = lineHeight + padTop + padBottom
-    }
-    renderer.init(w, h)
-
-    blocks.unshift(createBlock(BlockType.RECTANGLE, {
-      x: width / 2,
-      y: height / 2,
-      width: w,
-      height: h,
-      radii: borderRadius,
-      fillColor: backgroundColor,
-      strokeColor: 'transparent'
-    }))
-
-    // add border block
-    if (borderWidth > 0 && borderColor && borderColor !== 'transparent') {
-      blocks.push(createBlock(BlockType.RECTANGLE, {
-        x: w / 2,
-        y: h / 2,
-        width: w,
-        height: h,
-        radii: borderRadius,
-        fillColor: 'transparent',
-        strokeWidth: borderWidth,
-        strokeColor: borderColor
-      }))
-    }
-
-    renderer.render(blocks)
+    renderer.render(viewportBlocks)
     this.afterRender()
 
     return this
@@ -413,9 +470,9 @@ export default class CodeViewer {
     } else {
       y = 0
     }
-    console.log(x, y)
 
-    // this.renderer.update(this.#rows, this.lineNumberStyle, { x, y })
+    this.#setState('scrollState', { x, y })
+
     this.afterRender()
   }
 
@@ -482,7 +539,7 @@ export default class CodeViewer {
       : el
 
     if ((parentElement == null) || !('innerHTML' in parentElement)) {
-      throw new TypeError(`'el' expect a Element or a string, but got '${typeof el}'`)
+      throw new TypeError(`'el' expect a Element or a selector, but got '${typeof el}'`)
     }
 
     const { renderer } = this
@@ -497,8 +554,8 @@ export default class CodeViewer {
     }
 
     // try parse content again
-    if (this.#rows.length === 0 && this.content) {
-      this.updateRows()
+    if (this.#blocks.length === 0 && this.content) {
+      this.updateBlocks()
     }
 
     parentElement.appendChild(renderer.canvas)
