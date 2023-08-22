@@ -1,5 +1,6 @@
 import { DEFAULT_STYLE } from '../config/defaultSetting'
 import type { Color, Coordinate, FontStyle, MarkRequired, MergeRecord, Point, Radii, Shadow, TextAlign, TextBaseLine } from '../types'
+import { createRandomId } from '../utils/tools'
 import { type Size } from './Measure'
 
 export enum Fixed {
@@ -22,6 +23,7 @@ export enum BlockType {
  * @member y - center y
  */
 interface BaseBlockOptions extends Coordinate, Size {
+  id?: string
   fixed?: Fixed
   z?: number
   opacity?: number
@@ -76,6 +78,7 @@ export type Block =
   | LineBlock
 
 const createGroupBlock = ({
+  id = createRandomId('GROUP_'),
   fixed = Fixed.UNSET,
   z = 0,
   opacity = 1,
@@ -89,6 +92,7 @@ const createGroupBlock = ({
 }: BaseBlockOptions & GroupBlockOptions): GroupBlock => {
   return {
     ...otherOptions,
+    id,
     type: BlockType.GROUP,
     fixed,
     z,
@@ -103,6 +107,7 @@ const createGroupBlock = ({
 }
 
 const createTextBlock = ({
+  id = createRandomId('TEXT_'),
   textAlign = DEFAULT_STYLE.textAlign,
   textBaseLine = DEFAULT_STYLE.textBaseLine,
   fontSize = DEFAULT_STYLE.fontSize,
@@ -122,6 +127,7 @@ const createTextBlock = ({
 }: BaseBlockOptions & TextBlockOptions): TextBlock => {
   return {
     ...otherOptions,
+    id,
     type: BlockType.TEXT,
     textAlign,
     textBaseLine,
@@ -142,6 +148,7 @@ const createTextBlock = ({
 }
 
 const createRectangleBlock = ({
+  id = createRandomId('RECT_'),
   radii = 0,
   fixed = Fixed.UNSET,
   z = 0,
@@ -155,6 +162,7 @@ const createRectangleBlock = ({
 }: BaseBlockOptions & RectangleBlockOptions): RectangleBlock => {
   return {
     ...options,
+    id,
     type: BlockType.RECTANGLE,
     radii,
     fixed,
@@ -169,6 +177,7 @@ const createRectangleBlock = ({
 }
 
 const createCircleBlock = ({
+  id = createRandomId('CIRCLE_'),
   fixed = Fixed.UNSET,
   z = 0,
   opacity = 1,
@@ -181,6 +190,7 @@ const createCircleBlock = ({
 }: BaseBlockOptions & CircleBlockOptions): CircleBlock => {
   return {
     ...options,
+    id,
     type: BlockType.CIRCLE,
     fixed,
     z,
@@ -194,6 +204,7 @@ const createCircleBlock = ({
 }
 
 const createLineBlock = ({
+  id = createRandomId('LINE_'),
   lineCap = 'butt',
   lineDashOffset = 0,
   lineJoin = 'miter',
@@ -210,6 +221,7 @@ const createLineBlock = ({
 }: BaseBlockOptions & LineBlockOptions): LineBlock => {
   return {
     ...options,
+    id,
     type: BlockType.LINE,
     lineCap,
     lineDashOffset,

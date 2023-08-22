@@ -1,5 +1,5 @@
-import { type Style, DEFAULT_COPY_BUTTON, DEFAULT_COLLAPSE_BUTTON } from '../config/defaultSetting'
-import type { Color, Coordinate, Shadow } from '../types'
+import { type Style } from '../config/defaultSetting'
+import type { Color, Shadow } from '../types'
 import { type Block, BlockType, type TextBlock, type LineBlock, type RectangleBlock, type CircleBlock, type GroupBlock, Fixed } from './Block'
 import type CodeViewer from './CodeViewer'
 import { type Size } from './Measure'
@@ -404,51 +404,51 @@ export default class Renderer {
   }
   // ---------- end scroll bar -----------
 
-  /**
-   * get Mouse point current position
-   * @todo - row | lineNumber
-   * @returns btn-collapse | btn-copy | other
-   */
-  getMousePosition ({ x, y }: Coordinate): 'btn-collapse' | 'btn-copy' | 'other' {
-    const {
-      codeViewer: {
-        headerBar
-      },
-      width
-    } = this
+  // /**
+  //  * get Mouse point current position
+  //  * @todo - row | lineNumber
+  //  * @returns btn-collapse | btn-copy | other
+  //  */
+  // getMousePosition ({ x, y }: Coordinate): 'btn-collapse' | 'btn-copy' | 'other' {
+  //   const {
+  //     codeViewer: {
+  //       headerBar
+  //     },
+  //     width
+  //   } = this
 
-    if (headerBar.visible) {
-      const {
-        style: {
-          padding: [top, right, , left]
-        }
-      } = headerBar
-      if (headerBar.canCopy) {
-        const [x1, y1, x2, y2] = [
-          width - right - DEFAULT_COPY_BUTTON.width,
-          top,
-          width - right,
-          top + DEFAULT_COPY_BUTTON.height
-        ]
-        if (x >= x1 && x <= x2 && y >= y1 && y <= y2) {
-          return 'btn-copy'
-        }
-      }
-      if (headerBar.collapsible) {
-        const [x1, y1, x2, y2] = [
-          left,
-          top,
-          left + DEFAULT_COLLAPSE_BUTTON.width,
-          top + DEFAULT_COLLAPSE_BUTTON.height
-        ]
-        if (x >= x1 && x <= x2 && y >= y1 && y <= y2) {
-          return 'btn-collapse'
-        }
-      }
-    }
+  //   if (headerBar.visible) {
+  //     const {
+  //       style: {
+  //         padding: [top, right, , left]
+  //       }
+  //     } = headerBar
+  //     if (headerBar.canCopy) {
+  //       const [x1, y1, x2, y2] = [
+  //         width - right - DEFAULT_COPY_BUTTON.width,
+  //         top,
+  //         width - right,
+  //         top + DEFAULT_COPY_BUTTON.height
+  //       ]
+  //       if (x >= x1 && x <= x2 && y >= y1 && y <= y2) {
+  //         return 'btn-copy'
+  //       }
+  //     }
+  //     if (headerBar.collapsible) {
+  //       const [x1, y1, x2, y2] = [
+  //         left,
+  //         top,
+  //         left + DEFAULT_COLLAPSE_BUTTON.width,
+  //         top + DEFAULT_COLLAPSE_BUTTON.height
+  //       ]
+  //       if (x >= x1 && x <= x2 && y >= y1 && y <= y2) {
+  //         return 'btn-collapse'
+  //       }
+  //     }
+  //   }
 
-    return 'other'
-  }
+  //   return 'other'
+  // }
 
   translate (x: number, y: number) {
     this.ctx.translate(x, y)

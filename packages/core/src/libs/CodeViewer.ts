@@ -2,17 +2,24 @@
  * Code Renderer
  */
 
-import { DEFAULT_HEADER_BAR, DEFAULT_LINE_NUMBER_STYLE, DEFAULT_SELECT_STYLE, DEFAULT_STYLE, DEFAULT_SCOPE_STYLES, type Style, type ScopeStyles, DEFAULT_HEADER_BAR_DARK } from '../config/defaultSetting'
+import { DEFAULT_LINE_NUMBER_STYLE, DEFAULT_STYLE, type Style, type ScopeStyles, DEFAULT_HEADER_BAR_STYLE, BTN_COPY_ID, BTN_COLLAPSE_ID } from '../config/defaultSetting'
 import { deepMergeObject, getMouseCoordinate, isEmptyObject, isString } from '../utils/tools'
 import Renderer from './Renderer'
 import { parseContent, parseHeaderBar } from './Parser'
 import ScrollBar, { ScrollBarType } from './ScrollBar'
 import { type Coordinate } from '../types'
 import { type CodeViewerTheme, lightTheme, darkTheme } from '../themes'
-import { createBlock, type Block, BlockType, Fixed } from './Block'
+import { createBlock, type Block, BlockType, Fixed, type GroupBlock } from './Block'
 import type { Size } from './Measure'
 
 type Overflow = 'auto' | 'hidden' | 'scroll'
+
+export interface HeaderBarSetting {
+  visible: boolean
+  displayLanguage?: boolean
+  collapsible?: boolean
+  copyable?: boolean
+}
 
 export interface ViewerOptions {
   content?: string
@@ -25,13 +32,13 @@ export interface ViewerOptions {
   themeMode?: 'light' | 'dark'
 
   displayLineNumber?: boolean
-  wrap?: boolean
-  selectable?: boolean
   breakRow?: boolean
   overflowX?: Overflow
   overflowY?: Overflow
 
-  collapsed?: boolean
+  headerBarSetting?: HeaderBarSetting
+
+  // collapsed?: boolean
 }
 
 export default class CodeViewer {
@@ -44,18 +51,22 @@ export default class CodeViewer {
   actualWidth = 0
   actualHeight = 0
 
-  headerBar = DEFAULT_HEADER_BAR
+  // headerBar = DEFAULT_HEADER_BAR
+  headerBarSetting: HeaderBarSetting = {
+    visible: false,
+    displayLanguage: false,
+    collapsible: false,
+    copyable: false
+  }
 
   style = DEFAULT_STYLE
-  selectStyle = DEFAULT_SELECT_STYLE
   lineNumberStyle = DEFAULT_LINE_NUMBER_STYLE
+  headerBarStyle = DEFAULT_HEADER_BAR_STYLE
 
   displayLineNumber = true
-  wrap = false
-  selectable = true
   breakRow = true
   /** is collapsed */
-  collapsed = false
+  // collapsed = false
   copyState: 'Default' | 'Success' | 'Failure' = 'Default'
   scrollState: Coordinate = { x: 0, y: 0 }
 
@@ -66,9 +77,10 @@ export default class CodeViewer {
   overflowX: Overflow = 'auto'
   overflowY: Overflow = 'auto'
 
-  scopeStyles: ScopeStyles = DEFAULT_SCOPE_STYLES
+  scopeStyles: ScopeStyles = {}
 
   #isMounted = false
+  isCollapsed = false
 
   #headerBarBlocks: Block[] = []
   #blocks: Block[] = []
@@ -78,10 +90,6 @@ export default class CodeViewer {
 
   constructor (options: ViewerOptions = {}, theme: CodeViewerTheme = options.themeMode === 'dark' ? darkTheme : lightTheme) {
     deepMergeObject(this, options)
-
-    if (options.themeMode === 'dark') {
-      this.headerBar = DEFAULT_HEADER_BAR_DARK
-    }
 
     this.setTheme(theme, options.themeMode)
 
@@ -115,20 +123,18 @@ export default class CodeViewer {
     const {
       width,
       height,
-      collapsed,
+      isCollapsed,
       style: {
         lineHeight
       },
-      headerBar: {
-        style: {
-          padding: [padTop, , padBottom]
-        }
+      headerBarStyle: {
+        padding: [padTop, , padBottom]
       }
     } = this
 
     return {
       width,
-      height: collapsed
+      height: isCollapsed
         ? lineHeight + padTop + padBottom
         : height
     }
@@ -221,12 +227,6 @@ export default class CodeViewer {
     // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
     const actualHeight = this.actualHeight = Math.max.apply(null, this.#blocks.map(({ y, height }) => y + height / 2)) + (bottom ?? 0)
 
-    console.log({
-      actualWidth,
-      actualHeight,
-      blocks: this.#blocks
-    })
-
     this.horizontalScrollBar = new ScrollBar(renderer, {
       type: ScrollBarType.horizontal,
       actualLength: actualWidth,
@@ -309,7 +309,7 @@ export default class CodeViewer {
         this.#headerBarBlocks = parseHeaderBar(this)
         this.render()
         break
-      case 'collapsed':
+      case 'isCollapsed':
         this.#headerBarBlocks = parseHeaderBar(this)
         this.render()
         break
@@ -513,21 +513,35 @@ export default class CodeViewer {
   handleClick = (e: MouseEvent) => {
     const { x, y } = getMouseCoordinate(e)
 
-    const { renderer } = this
+    if (this.headerBarSetting.visible) {
+      const {
+        children = [],
+        x: midX,
+        y: midY
+      } = (this.#headerBarBlocks[0] || {}) as GroupBlock
+      const copyBtn = children.find(block => block.id === BTN_COPY_ID)
+      const collapseBtn = children.find(block => block.id === BTN_COLLAPSE_ID)
 
-    const pos = renderer.getMousePosition({ x, y })
-
-    switch (pos) {
-      case 'btn-copy':
+      if (
+        copyBtn &&
+        midX + copyBtn.x - copyBtn.width / 2 <= x &&
+        midX + copyBtn.x + copyBtn.width / 2 >= x &&
+        midY + copyBtn.y - copyBtn.height / 2 <= y &&
+        midY + copyBtn.y + copyBtn.height / 2 >= y
+      ) {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.handleCopy()
-        break
-      case 'btn-collapse':
+      } else if (
+        collapseBtn &&
+        midX + collapseBtn.x - collapseBtn.width / 2 <= x &&
+        midX + collapseBtn.x + collapseBtn.width / 2 >= x &&
+        midY + collapseBtn.y - collapseBtn.height / 2 <= y &&
+        midY + collapseBtn.y + collapseBtn.height / 2 >= y
+      ) {
         this.toggleCollapse()
-        break
-      case 'other':
-      default:
-        break
+      } else {
+        // Click other blocks
+      }
     }
   }
 
@@ -552,7 +566,7 @@ export default class CodeViewer {
   }
 
   toggleCollapse () {
-    this.#setState('collapsed', !this.collapsed)
+    this.#setState('isCollapsed', !this.isCollapsed)
   }
 
   mount (el: string | Element): CodeViewer {

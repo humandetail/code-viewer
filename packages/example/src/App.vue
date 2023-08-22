@@ -55,7 +55,13 @@ const cv = new CodeViewer({
   breakRow: false,
   overflowX: 'scroll',
   overflowY: 'auto',
-  themeMode: 'light'
+  themeMode: 'light',
+  headerBarSetting: {
+    visible: true,
+    collapsible: true,
+    displayLanguage: true,
+    copyable: true
+  }
 }, {
   style: {
     borderRadius: 8,
@@ -66,18 +72,6 @@ const cv = new CodeViewer({
 onMounted(() => {
   cv.mount(containerRef.value)
   cv.render()
-
-  let width = 400
-  let height = 200
-  const t = setInterval(() => {
-    width += 40
-    height += 40
-    cv.resize(width, height)
-
-    if (width >= 800) {
-      clearInterval(t)
-    }
-  }, 1000)
 })
 
 let delayRenderTimeoutId: number
