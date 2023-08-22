@@ -476,6 +476,28 @@ export default class CodeViewer {
     this.afterRender()
   }
 
+  resize (width: number, height: number) {
+    if (width < 0 || height < 0) {
+      throw new RangeError('Out of range')
+    }
+
+    const isWidthChange = width !== this.width
+
+    Object.assign(this, { width, height })
+
+    this.#init()
+
+    // Should re-parse blocks when resize
+    if (this.breakRow) {
+      this.#blocks = parseContent(this.content, this.language, this)
+    }
+    if (isWidthChange) {
+      this.#headerBarBlocks = parseHeaderBar(this)
+    }
+
+    this.render()
+  }
+
   handleMouseWheel = (e: WheelEvent) => {
     e.preventDefault()
 
