@@ -363,8 +363,8 @@ export const parseHeaderBar = (codeViewer: CodeViewer) => {
         radius,
         width,
         height,
-        fillColor,
-        strokeColor,
+        // fillColor,
+        // strokeColor,
         triangleFillColor
       } = DEFAULT_COLLAPSE_BUTTON
 
@@ -375,15 +375,6 @@ export const parseHeaderBar = (codeViewer: CodeViewer) => {
         height,
         angle: 45,
         children: [
-          createBlock(BlockType.CIRCLE, {
-            x: 0,
-            y: 0,
-            width,
-            height,
-            radius,
-            fillColor,
-            strokeColor
-          }),
           createBlock(BlockType.LINE, {
             x: 0,
             y: -radius / 2,
