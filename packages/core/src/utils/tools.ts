@@ -1,4 +1,4 @@
-import type { Color, Coordinate } from '../types'
+import type { Coordinate } from '../types'
 
 type CurryFunction<T> = (arg: T) => T | CurryFunction<T>
 type ComposeFunction = <T>(...funcs: Array<(arg: T) => T>) => (arg: T) => T
@@ -44,22 +44,6 @@ export const deepMergeObject = <O extends Record<any, any>, T extends Record<any
   }
 }
 
-export const isTransparent = (val?: Color) => !val ?? val === 'transparent'
-
-export const isAllZero = (val: number | [number, number, number, number]) => {
-  return typeof val === 'number'
-    ? val === 0
-    : val.every(i => i === 0)
-}
-
-export const isAllTransparent = (val: Color | [Color, Color, Color, Color]) => {
-  return typeof val === 'string'
-    ? val.toLowerCase() === 'transparent'
-    : isArray(val)
-      ? val.every(i => i === 'string' ? i.toLowerCase() === 'transparent' : false)
-      : false
-}
-
 export const compose: ComposeFunction = (...funcs) => (arg) => {
   return funcs.reduceRight((acc, func) => func(acc), arg)
 }
@@ -91,4 +75,8 @@ export const getMouseCoordinate = (e: MouseEvent): Coordinate => {
     x: clientX - left,
     y: clientY - top
   }
+}
+
+export const createRandomId = (suffix = '') => {
+  return `${suffix}${Date.now()}${Math.random().toString().slice(2, 8)}`
 }

@@ -1,5 +1,5 @@
 import type { CodeViewerTheme } from '.'
-import { DEFAULT_LINE_NUMBER_STYLE, DEFAULT_SCROLL_BAR_STYLE, DEFAULT_STYLE, type ScopeStyles } from '../config/defaultSetting'
+import { DEFAULT_HEADER_BAR_STYLE, DEFAULT_LINE_NUMBER_STYLE, DEFAULT_SCROLL_BAR_STYLE, DEFAULT_STYLE, type ScopeStyles } from '../config/defaultSetting'
 
 const scopeStyles: ScopeStyles = {
   doctag: { color: '#d73a49' },
@@ -48,6 +48,7 @@ const theme: Required<CodeViewerTheme> = {
   style: DEFAULT_STYLE,
   lineNumberStyle: DEFAULT_LINE_NUMBER_STYLE,
   scrollBarStyle: DEFAULT_SCROLL_BAR_STYLE,
+  headerBarStyle: DEFAULT_HEADER_BAR_STYLE,
   scopeStyles
 }
 

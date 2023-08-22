@@ -32,7 +32,6 @@ export interface Style {
 export interface LineNumberStyle {
   color?: Color
   borderColor?: Color
-  borderFocusColor?: Color
   backgroundColor?: Color
   padding?: number
 }
@@ -48,20 +47,22 @@ export interface ScrollBarStyle {
 
 export type ColorStop = [number, string]
 
-export interface HeaderBar {
-  visible: boolean
-  style: {
-    borderColor: Color
-    backgroundColor: Color
-    padding: [number, number, number, number]
-  }
-  collapsible?: boolean
-  canCopy?: boolean
+interface Button {
+  size: number
+  fillColor?: Color
+  strokeColor?: Color
+}
+
+export interface HeaderBarStyle {
+  borderColor?: Color
+  backgroundColor?: Color
+  padding?: [number, number, number, number]
   language?: {
-    visible: boolean
-    fontSize: number
-    color: Color
+    color?: Color
+    fontSize?: number
   }
+  copyButton?: Button
+  collapseButton?: Button
 }
 
 /**
@@ -122,6 +123,9 @@ const scopes = [
   'deletion'
 ] as const
 
+export const BTN_COLLAPSE_ID = 'BTN_COLLAPSE'
+export const BTN_COPY_ID = 'BTN_COPY'
+
 export const DEFAULT_FONT_SIZE = 16
 export const DEFAULT_LINE_HEIGHT = 22
 export const DEFAULT_PADDING = 16
@@ -144,31 +148,21 @@ export const DEFAULT_STYLE: Required<Style> = {
   borderStyle: 'solid',
   borderRadius: DEFAULT_BORDER_RADIUS,
   padding: [DEFAULT_PADDING, DEFAULT_PADDING, DEFAULT_PADDING, DEFAULT_PADDING]
-  // margin: [0, 0, 0, 0]
-
-  // @todo
-  // hoverStyle
-  // ...
 }
 
 /** Default Scope Styles */
-export const DEFAULT_SCOPE_STYLES = ((): ScopeStyles =>
-  // scopes.reduce((options, scope) => {
-  //   options[scope] = DEFAULT_STYLE
-  //   return options
-  // }, {} as Required<ScopeStyles>)
-  ({})
-)()
+// export const DEFAULT_SCOPE_STYLES = ((): ScopeStyles =>
+//   ({})
+// )()
 
-export const DEFAULT_SELECT_STYLE: Style = {
-  backgroundColor: '#0088ff'
-}
+// export const DEFAULT_SELECT_STYLE: Style = {
+//   backgroundColor: '#0088ff'
+// }
 
 export const DEFAULT_LINE_NUMBER_STYLE: Required<LineNumberStyle> = {
   color: '#a1a1a1',
   borderColor: '#c1c1c1',
   backgroundColor: '#f6f6f6',
-  borderFocusColor: '#c1c1c1',
   padding: DEFAULT_PADDING
 }
 
@@ -179,50 +173,22 @@ export const DEFAULT_SCROLL_BAR_STYLE: Required<ScrollBarStyle> = {
   thumbBackgroundColor: 'pink'
 }
 
-export const DEFAULT_HEADER_BAR: HeaderBar = {
-  visible: true,
-  collapsible: true,
-  canCopy: true,
+export const DEFAULT_HEADER_BAR_STYLE: Required<HeaderBarStyle> = {
+  borderColor: '#c1c1c1',
+  backgroundColor: '#f6f6f6',
+  padding: [DEFAULT_PADDING / 2, DEFAULT_PADDING, DEFAULT_PADDING / 2, DEFAULT_PADDING],
   language: {
-    visible: true,
-    color: '#9d9e9f',
+    color: '#a1a1a1',
     fontSize: 14
   },
-  style: {
-    padding: [DEFAULT_PADDING / 2, DEFAULT_PADDING, DEFAULT_PADDING / 2, DEFAULT_PADDING],
-    borderColor: '#c1c1c1',
-    backgroundColor: '#f6f6f6'
-  }
-}
-
-export const DEFAULT_HEADER_BAR_DARK: HeaderBar = {
-  visible: true,
-  collapsible: true,
-  canCopy: true,
-  language: {
-    visible: true,
-    color: '#666',
-    fontSize: 14
+  copyButton: {
+    size: 18,
+    fillColor: 'transparent',
+    strokeColor: '#a1a1a1'
   },
-  style: {
-    padding: [DEFAULT_PADDING / 2, DEFAULT_PADDING, DEFAULT_PADDING / 2, DEFAULT_PADDING],
-    borderColor: '#333',
-    backgroundColor: '#0d1117'
+  collapseButton: {
+    size: 18,
+    fillColor: '#a1a1a1',
+    strokeColor: 'transparent'
   }
-}
-
-export const DEFAULT_COLLAPSE_BUTTON = {
-  radius: 7,
-  width: 14,
-  height: 14,
-  fillColor: '#62c655',
-  strokeColor: '#666',
-  triangleFillColor: '#296218'
-}
-
-export const DEFAULT_COPY_BUTTON = {
-  width: 18,
-  height: 18,
-  fillColor: 'transparent',
-  strokeColor: '#296218'
 }

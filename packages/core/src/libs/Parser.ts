@@ -1,5 +1,5 @@
 import hljs from 'highlight.js'
-import { type Style, type ScopeStyles, DEFAULT_COLLAPSE_BUTTON, DEFAULT_COPY_BUTTON } from '../config/defaultSetting'
+import { type Style, type ScopeStyles, BTN_COPY_ID, BTN_COLLAPSE_ID } from '../config/defaultSetting'
 import { type Size, getMaxRenderIndex, getTextSize } from './Measure'
 import { LF_REGEX, compose, isString, splitLF, toCurry } from '../utils/tools'
 import type CodeViewer from './CodeViewer'
@@ -57,7 +57,7 @@ const rowsToBlocks = (
   const {
     breakRow,
     displayLineNumber,
-    headerBar,
+    headerBarSetting,
     width,
     style: {
       padding: [padTop, padRight, , padLeft],
@@ -66,7 +66,8 @@ const rowsToBlocks = (
       fontStyle,
       fontWeight
     },
-    lineNumberStyle
+    lineNumberStyle,
+    headerBarStyle
   } = codeViewer
 
   const maxContentWidth = breakRow
@@ -80,8 +81,8 @@ const rowsToBlocks = (
 
   const baseLeft = lineNumberWidth + (padLeft ?? 0)
   let baseTop = (padTop ?? 0) + (
-    headerBar.visible
-      ? (headerBar.style.padding[0] ?? 0) + (headerBar.style.padding[2] ?? 0) + lineHeight
+    headerBarSetting.visible
+      ? (headerBarStyle.padding[0] ?? 0) + (headerBarStyle.padding[2] ?? 0) + lineHeight
       : 0
   )
 
@@ -331,20 +332,39 @@ export const parseHeaderBar = (codeViewer: CodeViewer) => {
 
   const {
     width: codeViewerWidth,
-    headerBar: {
+    isCollapsed,
+    headerBarSetting: {
       visible,
+      displayLanguage,
       collapsible,
-      canCopy,
-      language,
-      style
+      copyable
     },
     style: {
       lineHeight,
       borderRadius
+    },
+    headerBarStyle: {
+      padding: headerBarPadding,
+      backgroundColor: headerBarBackgroundColor,
+      borderColor: headerBarBorderColor,
+      copyButton: {
+        size: copyButtonSize,
+        fillColor: copyButtonFillColor,
+        strokeColor: copyButtonStrokeColor
+      },
+      collapseButton: {
+        size: collapseButtonSize,
+        fillColor: collapseButtonFillColor,
+        strokeColor: collapseButtonStrokeColor
+      },
+      language: {
+        fontSize: languageFontSize,
+        color: languageColor
+      }
     }
   } = codeViewer
 
-  const height = (style.padding[0] ?? 0) + lineHeight + (style.padding[2] ?? 0)
+  const height = (headerBarPadding?.[0] ?? 0) + lineHeight + (headerBarPadding?.[2] ?? 0)
 
   if (visible) {
     // bg
@@ -354,58 +374,41 @@ export const parseHeaderBar = (codeViewer: CodeViewer) => {
       width: codeViewerWidth,
       height,
       radii: borderRadius,
-      fillColor: style.backgroundColor
+      fillColor: headerBarBackgroundColor
     }))
 
     // btn-collapse
     if (collapsible) {
-      const {
-        radius,
-        width,
-        height,
-        fillColor,
-        strokeColor,
-        triangleFillColor
-      } = DEFAULT_COLLAPSE_BUTTON
-
       children.push(createBlock(BlockType.GROUP, {
-        x: -codeViewerWidth / 2 + (style.padding.at(-1) ?? 0) + radius,
+        id: BTN_COLLAPSE_ID,
+        x: -codeViewerWidth / 2 + (headerBarPadding.at(-1) ?? 0) + collapseButtonSize / 2,
         y: 0,
-        width,
-        height,
+        width: collapseButtonSize,
+        height: collapseButtonSize,
         angle: 45,
         children: [
-          createBlock(BlockType.CIRCLE, {
-            x: 0,
-            y: 0,
-            width,
-            height,
-            radius,
-            fillColor,
-            strokeColor
-          }),
           createBlock(BlockType.LINE, {
             x: 0,
-            y: -radius / 2,
-            width: radius / 2,
-            height: radius - 2,
-            points: !codeViewer.collapsed
+            y: -collapseButtonSize / 4,
+            width: collapseButtonSize / 4,
+            height: collapseButtonSize / 2 - 2,
+            points: !codeViewer.isCollapsed
               ? [
                   {
                     x: 0,
-                    y: radius / 3
+                    y: collapseButtonSize / 6
                   },
                   {
-                    x: -radius / 2,
+                    x: -collapseButtonSize / 4,
                     y: -1
                   },
                   {
-                    x: radius / 2,
+                    x: collapseButtonSize / 4,
                     y: -1
                   },
                   {
                     x: 0,
-                    y: radius / 3
+                    y: collapseButtonSize / 6
                   }
                 ]
               : [
@@ -414,42 +417,43 @@ export const parseHeaderBar = (codeViewer: CodeViewer) => {
                     y: -1
                   },
                   {
-                    x: -radius / 2,
-                    y: radius / 3
+                    x: -collapseButtonSize / 4,
+                    y: collapseButtonSize / 6
                   },
                   {
-                    x: radius / 2,
-                    y: radius / 3
+                    x: collapseButtonSize / 4,
+                    y: collapseButtonSize / 6
                   },
                   {
                     x: 0,
                     y: -1
                   }
                 ],
-            fillColor: triangleFillColor
+            fillColor: collapseButtonFillColor,
+            strokeColor: collapseButtonStrokeColor
           }),
           createBlock(BlockType.LINE, {
             x: 0,
-            y: radius / 2,
-            width: radius / 2,
-            height: radius - 2,
-            points: !codeViewer.collapsed
+            y: collapseButtonSize / 4,
+            width: collapseButtonSize / 4,
+            height: collapseButtonSize / 2 - 2,
+            points: !codeViewer.isCollapsed
               ? [
                   {
                     x: 0,
-                    y: -radius / 3
+                    y: -collapseButtonSize / 6
                   },
                   {
-                    x: -radius / 2,
+                    x: -collapseButtonSize / 4,
                     y: 1
                   },
                   {
-                    x: radius / 2,
+                    x: collapseButtonSize / 4,
                     y: 1
                   },
                   {
                     x: 0,
-                    y: -radius / 3
+                    y: -collapseButtonSize / 6
                   }
                 ]
               : [
@@ -458,26 +462,27 @@ export const parseHeaderBar = (codeViewer: CodeViewer) => {
                     y: 1
                   },
                   {
-                    x: -radius / 2,
-                    y: -radius / 3
+                    x: -collapseButtonSize / 4,
+                    y: -collapseButtonSize / 6
                   },
                   {
-                    x: radius / 2,
-                    y: -radius / 3
+                    x: collapseButtonSize / 4,
+                    y: -collapseButtonSize / 6
                   },
                   {
                     x: 0,
                     y: 1
                   }
                 ],
-            fillColor: triangleFillColor
+            fillColor: collapseButtonFillColor,
+            strokeColor: collapseButtonStrokeColor
           })
         ]
       }))
     }
 
     // language
-    if (language?.visible) {
+    if (displayLanguage) {
       children.push(createBlock(BlockType.TEXT, {
         x: 0,
         y: 0,
@@ -486,91 +491,96 @@ export const parseHeaderBar = (codeViewer: CodeViewer) => {
         text: `${codeViewer.language}`,
         textAlign: 'center',
         textBaseLine: 'middle',
-        fontSize: language.fontSize,
-        fillColor: language.color
+        fontSize: languageFontSize,
+        fillColor: languageColor
       }))
     }
 
-    if (canCopy) {
+    if (copyable) {
       switch (codeViewer.copyState) {
         case 'Failure':
         case 'Success':
           children.push(createBlock(BlockType.TEXT, {
-            x: codeViewerWidth / 2 - (style.padding[1] ?? 0) - DEFAULT_COPY_BUTTON.width / 2,
+            x: codeViewerWidth / 2 - (headerBarPadding[1] ?? 0) - copyButtonSize / 2,
             y: 0,
             fixed: Fixed.BOTH,
-            width: DEFAULT_COPY_BUTTON.width,
-            height: DEFAULT_COPY_BUTTON.height,
+            width: copyButtonSize,
+            height: copyButtonSize,
             text: codeViewer.copyState,
             textAlign: 'right',
             textBaseLine: 'middle',
             fillColor: codeViewer.copyState === 'Success'
-              ? 'green'
-              : 'red'
+              ? '#52c41a'
+              : '#f5222d'
           }))
           break
         case 'Default':
         default:
-          children.push(createBlock(BlockType.GROUP, {
-            x: codeViewerWidth / 2 - (style.padding[1] ?? 0) - DEFAULT_COPY_BUTTON.width / 2,
-            y: 0,
-            fixed: Fixed.BOTH,
-            width: DEFAULT_COPY_BUTTON.width,
-            height: DEFAULT_COPY_BUTTON.height,
-            children: [
-              createBlock(BlockType.RECTANGLE, {
-                x: 4 - (DEFAULT_COPY_BUTTON.width / 2 + 4) / 2,
-                y: -4 + (DEFAULT_COPY_BUTTON.height / 2 + 4) / 2,
-                width: DEFAULT_COPY_BUTTON.width / 2 + 4,
-                height: DEFAULT_COPY_BUTTON.height / 2 + 4,
-                strokeColor: DEFAULT_COPY_BUTTON.strokeColor,
-                fillColor: DEFAULT_COPY_BUTTON.fillColor,
-                radii: 2
-              }),
-              createBlock(BlockType.RECTANGLE, {
-                x: -5 + (DEFAULT_COPY_BUTTON.width / 2 + 5) / 2,
-                y: 5 - (DEFAULT_COPY_BUTTON.height / 2 + 5) / 2,
-                width: DEFAULT_COPY_BUTTON.width / 2 + 5,
-                height: DEFAULT_COPY_BUTTON.height / 2 + 5,
-                strokeColor: style.backgroundColor,
-                fillColor: style.backgroundColor,
-                radii: 2
-              }),
-              createBlock(BlockType.RECTANGLE, {
-                x: -4 + (DEFAULT_COPY_BUTTON.width / 2 + 4) / 2,
-                y: 4 - (DEFAULT_COPY_BUTTON.height / 2 + 4) / 2,
-                width: DEFAULT_COPY_BUTTON.width / 2 + 4,
-                height: DEFAULT_COPY_BUTTON.height / 2 + 4,
-                strokeColor: DEFAULT_COPY_BUTTON.strokeColor,
-                fillColor: DEFAULT_COPY_BUTTON.fillColor,
-                radii: 2
-              })
-            ]
-          }))
+          if (!isCollapsed) {
+            children.push(createBlock(BlockType.GROUP, {
+              id: BTN_COPY_ID,
+              x: codeViewerWidth / 2 - (headerBarPadding[1] ?? 0) - copyButtonSize / 2,
+              y: 0,
+              fixed: Fixed.BOTH,
+              width: copyButtonSize,
+              height: copyButtonSize,
+              children: [
+                createBlock(BlockType.RECTANGLE, {
+                  x: 4 - (copyButtonSize / 2 + 4) / 2,
+                  y: -4 + (copyButtonSize / 2 + 4) / 2,
+                  width: copyButtonSize / 2 + 4,
+                  height: copyButtonSize / 2 + 4,
+                  strokeColor: copyButtonStrokeColor,
+                  fillColor: copyButtonFillColor,
+                  radii: 2
+                }),
+                createBlock(BlockType.RECTANGLE, {
+                  x: -5 + (copyButtonSize / 2 + 5) / 2,
+                  y: 5 - (copyButtonSize / 2 + 5) / 2,
+                  width: copyButtonSize / 2 + 5,
+                  height: copyButtonSize / 2 + 5,
+                  strokeColor: headerBarBackgroundColor,
+                  fillColor: headerBarBackgroundColor,
+                  radii: 2
+                }),
+                createBlock(BlockType.RECTANGLE, {
+                  x: -4 + (copyButtonSize / 2 + 4) / 2,
+                  y: 4 - (copyButtonSize / 2 + 4) / 2,
+                  width: copyButtonSize / 2 + 4,
+                  height: copyButtonSize / 2 + 4,
+                  strokeColor: copyButtonStrokeColor,
+                  fillColor: copyButtonFillColor,
+                  radii: 2
+                })
+              ]
+            }))
+          }
           break
       }
     }
 
     // border
-    children.push(createBlock(BlockType.LINE, {
-      x: 0,
-      y: height / 2,
-      fixed: Fixed.BOTH,
-      width: codeViewerWidth,
-      height: 1,
-      points: [
-        {
-          x: -codeViewerWidth / 2 + (codeViewer.collapsed ? typeof borderRadius === 'number' ? borderRadius : 0 : 0),
-          y: 0
-        },
-        {
-          x: codeViewerWidth / 2 - (codeViewer.collapsed ? typeof borderRadius === 'number' ? borderRadius : 0 : 0),
-          y: 0
-        }
-      ],
-      strokeColor: style.borderColor,
-      fillColor: 'transparent'
-    }))
+    if (!isCollapsed) {
+      children.push(createBlock(BlockType.LINE, {
+        x: 0,
+        y: height / 2,
+        fixed: Fixed.BOTH,
+        width: codeViewerWidth,
+        height: 1,
+        points: [
+          {
+            x: -codeViewerWidth / 2,
+            y: 0
+          },
+          {
+            x: codeViewerWidth / 2,
+            y: 0
+          }
+        ],
+        strokeColor: headerBarBorderColor,
+        fillColor: 'transparent'
+      }))
+    }
   }
 
   return [

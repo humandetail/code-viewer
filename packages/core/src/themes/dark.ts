@@ -1,7 +1,5 @@
 import type { CodeViewerTheme } from '.'
-import { DEFAULT_LINE_NUMBER_STYLE, DEFAULT_SCROLL_BAR_STYLE, DEFAULT_STYLE, type ScopeStyles } from '../config/defaultSetting'
-
-// .hljs{color:#c9d1d9;background:#0d1117}
+import { DEFAULT_HEADER_BAR_STYLE, DEFAULT_LINE_NUMBER_STYLE, DEFAULT_SCROLL_BAR_STYLE, DEFAULT_STYLE, type ScopeStyles } from '../config/defaultSetting'
 
 const scopeStyles: ScopeStyles = {
   doctag: { color: '#ff7b72' },
@@ -46,21 +44,43 @@ const scopeStyles: ScopeStyles = {
   deletion: { color: '#ffdcd7', backgroundColor: '#67060c' }
 }
 
+const backgroundColor = '#0d1117'
+const borderColor = '#f1f1f1'
+
 const darkTheme: Required<CodeViewerTheme> = {
   style: {
     ...DEFAULT_STYLE,
     color: '#c9d1d9',
-    backgroundColor: '#0d1117',
-    borderColor: '#f1f1f1'
+    backgroundColor,
+    borderColor
   },
   lineNumberStyle: {
     ...DEFAULT_LINE_NUMBER_STYLE,
     color: '#a1a1a1',
-    borderColor: '#c1c1c1',
-    borderFocusColor: '#c1c1c1'
+    borderColor,
+    backgroundColor
   },
   scrollBarStyle: {
     ...DEFAULT_SCROLL_BAR_STYLE
+  },
+  headerBarStyle: {
+    ...DEFAULT_HEADER_BAR_STYLE,
+    backgroundColor,
+    borderColor,
+    language: {
+      fontSize: 14,
+      color: '#a1a1a1'
+    },
+    copyButton: {
+      size: 18,
+      fillColor: 'transparent',
+      strokeColor: borderColor
+    },
+    collapseButton: {
+      size: 18,
+      fillColor: borderColor,
+      strokeColor: 'transparent'
+    }
   },
   scopeStyles
 }

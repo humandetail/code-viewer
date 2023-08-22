@@ -51,13 +51,21 @@ const cv = new CodeViewer({
   language: lang.value,
   width: 400,
   height: 200,
+  displayLineNumber: true,
   breakRow: false,
   overflowX: 'scroll',
-  overflowY: 'scroll',
-  themeMode: 'light'
+  overflowY: 'auto',
+  themeMode: 'light',
+  headerBarSetting: {
+    visible: true,
+    collapsible: true,
+    displayLanguage: true,
+    copyable: true
+  }
 }, {
   style: {
-    borderRadius: 8
+    borderRadius: 8,
+    borderWidth: 0
   }
 })
 
