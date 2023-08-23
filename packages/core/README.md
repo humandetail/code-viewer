@@ -36,7 +36,7 @@ const cv = new CodeViewer({
   language: 'language'
 })
 
-cv..mount(document.querySelector('#container'))
+cv.mount(document.querySelector('#container'))
   .render()
 ```
 

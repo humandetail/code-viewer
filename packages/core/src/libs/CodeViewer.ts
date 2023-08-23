@@ -2,8 +2,8 @@
  * Code Renderer
  */
 
-import { DEFAULT_LINE_NUMBER_STYLE, DEFAULT_STYLE, type Style, type ScopeStyles, DEFAULT_HEADER_BAR_STYLE, BTN_COPY_ID, BTN_COLLAPSE_ID } from '../config/defaultSetting'
-import { deepMergeObject, getMouseCoordinate, isEmptyObject, isString } from '../utils/tools'
+import { DEFAULT_LINE_NUMBER_STYLE, DEFAULT_STYLE, type ScopeStyles, DEFAULT_HEADER_BAR_STYLE, BTN_COPY_ID, BTN_COLLAPSE_ID } from '../config/defaultSetting'
+import { deepMergeObject, getMouseCoordinate, isString } from '../utils/tools'
 import Renderer from './Renderer'
 import { parseContent, parseHeaderBar } from './Parser'
 import ScrollBar, { ScrollBarType } from './ScrollBar'
@@ -38,7 +38,7 @@ export interface ViewerOptions {
 
   headerBarSetting?: HeaderBarSetting
 
-  // collapsed?: boolean
+  isCollapsed?: boolean
 }
 
 export default class CodeViewer {
@@ -65,8 +65,6 @@ export default class CodeViewer {
 
   displayLineNumber = true
   breakRow = true
-  /** is collapsed */
-  // collapsed = false
   copyState: 'Default' | 'Success' | 'Failure' = 'Default'
   scrollState: Coordinate = { x: 0, y: 0 }
 
@@ -96,27 +94,10 @@ export default class CodeViewer {
     this.updateBlocks()
 
     this.renderer = new Renderer(
-      this.style,
       this,
       options.width,
       options.height
     )
-  }
-
-  get maxContentWidth () {
-    const {
-      width,
-      style: {
-        padding: [, right]
-      },
-      breakRow
-    } = this
-
-    if (!breakRow) {
-      return Infinity
-    }
-
-    return width - right
   }
 
   get viewportSize (): Size {
@@ -322,41 +303,6 @@ export default class CodeViewer {
     }
   }
 
-  getScopeStyle (scope: keyof ScopeStyles): Required<Style> {
-    const { scopeStyles, style } = this
-
-    if (!scope) {
-      return style
-    }
-
-    const fullScopeStyle = scopeStyles[scope] as Required<Style>
-
-    if ((scope as string).includes('.')) {
-      const s = (scope as string).split('.').reduce<Style>((prev, key) => {
-        const s = scopeStyles[key as keyof ScopeStyles] as Required<Style>
-        if (s) {
-          Object.assign(prev, s)
-        }
-
-        return prev
-      }, {})
-
-      if (!isEmptyObject(fullScopeStyle)) {
-        Object.assign(s, fullScopeStyle)
-      }
-
-      return {
-        ...style,
-        ...s
-      }
-    }
-
-    return {
-      ...style,
-      ...fullScopeStyle
-    }
-  }
-
   update (content?: string, language?: string, resetScroll = true) {
     if (!this.#isMounted) {
       throw new Error('Make sure the `mount()` method is called first.')
@@ -370,7 +316,6 @@ export default class CodeViewer {
     }
 
     this.updateBlocks()
-    /** @todo */
     this.#init(false)
 
     const {
@@ -460,18 +405,14 @@ export default class CodeViewer {
       verticalScrollBar
     } = this
 
-    if (horizontalScrollBar.isActive) {
-      x = horizontalScrollBar[behaviors](x)
-    } else {
-      x = 0
-    }
-    if (verticalScrollBar.isActive) {
-      y = verticalScrollBar[behaviors](y)
-    } else {
-      y = 0
-    }
-
-    this.#setState('scrollState', { x, y })
+    this.#setState('scrollState', {
+      x: horizontalScrollBar.isActive
+        ? horizontalScrollBar[behaviors](x)
+        : 0,
+      y: verticalScrollBar.isActive
+        ? verticalScrollBar[behaviors](y)
+        : 0
+    })
 
     this.afterRender()
   }
@@ -539,8 +480,6 @@ export default class CodeViewer {
         midY + collapseBtn.y + collapseBtn.height / 2 >= y
       ) {
         this.toggleCollapse()
-      } else {
-        // Click other blocks
       }
     }
   }
@@ -584,9 +523,7 @@ export default class CodeViewer {
       const { width, height } = parentElement.getBoundingClientRect()
 
       renderer.init(width, height)
-
-      this.width = width
-      this.height = height
+      Object.assign(this, { width, height })
     }
 
     // try parse content again

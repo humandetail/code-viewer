@@ -1,17 +1,10 @@
+import { type ScopeStyles, type Style } from '../config/defaultSetting'
 import type { Coordinate } from '../types'
 
 type CurryFunction<T> = (arg: T) => T | CurryFunction<T>
 type ComposeFunction = <T>(...funcs: Array<(arg: T) => T>) => (arg: T) => T
 
 export const LF_REGEX = /\n(?<=[^\\])/
-
-export const isObject = (val: unknown): val is object => {
-  return Object.prototype.toString.call(val) === '[object Object]'
-}
-
-export const isArray = (val: unknown): val is unknown[] => {
-  return Array.isArray(val)
-}
 
 export const isString = (val: unknown): val is string => {
   return typeof val === 'string'
@@ -79,4 +72,41 @@ export const getMouseCoordinate = (e: MouseEvent): Coordinate => {
 
 export const createRandomId = (suffix = '') => {
   return `${suffix}${Date.now()}${Math.random().toString().slice(2, 8)}`
+}
+
+export const getScopeStyle = (
+  scope: keyof ScopeStyles,
+  scopeStyles: ScopeStyles,
+  defaultStyle: Required<Style>
+): Required<Style> => {
+  if (!scope) {
+    return defaultStyle
+  }
+
+  const fullScopeStyle = scopeStyles[scope] as Required<Style>
+
+  if ((scope as string).includes('.')) {
+    const s = (scope as string).split('.').reduce<Style>((prev, key) => {
+      const s = scopeStyles[key as keyof ScopeStyles] as Required<Style>
+      if (s) {
+        Object.assign(prev, s)
+      }
+
+      return prev
+    }, {})
+
+    if (!isEmptyObject(fullScopeStyle)) {
+      Object.assign(s, fullScopeStyle)
+    }
+
+    return {
+      ...defaultStyle,
+      ...s
+    }
+  }
+
+  return {
+    ...defaultStyle,
+    ...fullScopeStyle
+  }
 }

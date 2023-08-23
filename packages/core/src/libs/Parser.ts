@@ -1,11 +1,11 @@
 import hljs from 'highlight.js'
 import { type Style, type ScopeStyles, BTN_COPY_ID, BTN_COLLAPSE_ID } from '../config/defaultSetting'
 import { type Size, getMaxRenderIndex, getTextSize } from './Measure'
-import { LF_REGEX, compose, isString, splitLF, toCurry } from '../utils/tools'
+import { LF_REGEX, compose, getScopeStyle, isString, splitLF, toCurry } from '../utils/tools'
 import type CodeViewer from './CodeViewer'
 import { type Block, BlockType, Fixed, createBlock } from './Block'
 
-export interface ScopeData {
+interface ScopeData {
   scope: string
   children: Array<string | ScopeData>
 }
@@ -30,7 +30,7 @@ export interface LineNumber {
   left: number
 }
 
-export interface Row extends Size {
+interface Row extends Size {
   lineNumber: LineNumber
   children: InlineItem[]
 }
@@ -46,6 +46,71 @@ const flatScopeDataList = (
         : flatScopeDataList(item.children, item.scope)
     )
   }, [])
+}
+
+const mergeData = (
+  codeViewer: CodeViewer,
+  list: FlatData[]
+) => {
+  let lineNumber = 1
+  let children: InlineItem[] = []
+
+  const rows: Row[] = []
+
+  const pushRow = (children: InlineItem[]) => {
+    rows.push({
+      width: 0,
+      height: 0,
+      lineNumber: {
+        display: false,
+        value: lineNumber++,
+        width: 0,
+        height: 0,
+        left: 0
+      },
+      children
+    })
+  }
+
+  list.forEach(({ scope, content }) => {
+    const currentStyle = getScopeStyle(
+      scope as keyof ScopeStyles,
+      codeViewer.scopeStyles,
+      codeViewer.style
+    )
+
+    if (LF_REGEX.test(content)) {
+      splitLF(content).forEach((item, index, sourceArr) => {
+        if (item) {
+          children.push({
+            scope,
+            content: item,
+            style: currentStyle,
+            size: getTextSize(item, currentStyle)
+          })
+        }
+
+        if (sourceArr[index + 1] !== undefined) {
+          pushRow(children)
+
+          children = []
+        }
+      })
+    } else {
+      children.push({
+        scope,
+        content,
+        style: currentStyle,
+        size: getTextSize(content, currentStyle)
+      })
+    }
+  })
+
+  if (children.length !== 0) {
+    pushRow(children)
+  }
+
+  return rows
 }
 
 const rowsToBlocks = (
@@ -248,67 +313,14 @@ const rowsToBlocks = (
   return blocks
 }
 
-const mergeData = (
-  getScopeStyle: CodeViewer['getScopeStyle'],
-  list: FlatData[]
-) => {
-  let lineNumber = 1
-  let children: InlineItem[] = []
-
-  const rows: Row[] = []
-
-  const pushRow = (children: InlineItem[]) => {
-    rows.push({
-      width: 0,
-      height: 0,
-      lineNumber: {
-        display: false,
-        value: lineNumber++,
-        width: 0,
-        height: 0,
-        left: 0
-      },
-      children
-    })
-  }
-
-  list.forEach(({ scope, content }) => {
-    const currentStyle = getScopeStyle(scope as keyof ScopeStyles)
-
-    if (LF_REGEX.test(content)) {
-      splitLF(content).forEach((item, index, sourceArr) => {
-        if (item) {
-          children.push({
-            scope,
-            content: item,
-            style: currentStyle,
-            size: getTextSize(item, currentStyle)
-          })
-        }
-
-        if (sourceArr[index + 1] !== undefined) {
-          pushRow(children)
-
-          children = []
-        }
-      })
-    } else {
-      children.push({
-        scope,
-        content,
-        style: currentStyle,
-        size: getTextSize(content, currentStyle)
-      })
-    }
-  })
-
-  if (children.length !== 0) {
-    pushRow(children)
-  }
-
-  return rows
-}
-
+/**
+ * Convert the code string to blocks
+ *
+ * 1. Use `highlight.js` to convert code strings into data with style scope and content;
+ * 2. Flattening the scope data;
+ * 3. Divide paragraphs based on newlines in the content;
+ * 4. Convert to block.
+ */
 export const parseContent = (
   content: string,
   language = 'PlainText',
@@ -322,11 +334,19 @@ export const parseContent = (
 
   return compose<any>(
     toCurry<any>(rowsToBlocks)(codeViewer),
-    toCurry<any>(mergeData)(codeViewer.getScopeStyle.bind(codeViewer)),
+    toCurry<any>(mergeData)(codeViewer),
     flatScopeDataList
-  )(scopeDataList)
+  )(scopeDataList) as Block[]
 }
 
+/**
+ * Convert header bar settings to blocks
+ * - background block
+ * - collapse button block
+ * - language block
+ * - copy button block
+ * - border
+ */
 export const parseHeaderBar = (codeViewer: CodeViewer) => {
   const children: Block[] = []
 
