@@ -2,32 +2,28 @@ import { type Style } from '../config/defaultSetting'
 import type { Color, Shadow } from '../types'
 import { type Block, BlockType, type TextBlock, type LineBlock, type RectangleBlock, type CircleBlock, type GroupBlock, Fixed } from './Block'
 import type CodeViewer from './CodeViewer'
-import { type Size } from './Measure'
 import { ScrollBarType } from './ScrollBar'
 
 export default class Renderer {
   canvas: HTMLCanvasElement
   ctx: CanvasRenderingContext2D
-  style: Required<Style>
 
   protected codeViewer!: CodeViewer
 
   constructor (
-    style: Required<Style>,
     codeViewer: CodeViewer,
     public width: number = 0,
     public height: number = 0
   ) {
     const canvas = this.canvas = document.createElement('canvas')
     this.ctx = canvas.getContext('2d')!
-    this.style = style
     this.codeViewer = codeViewer
 
     if (width && height) {
       this.init(width, height)
     }
 
-    this.setCtxStyle(style)
+    this.setCtxStyle(codeViewer.style)
   }
 
   init (width?: number, height?: number) {
@@ -47,8 +43,10 @@ export default class Renderer {
   setCanvasStyle () {
     const {
       ctx,
-      style: {
-        padding: [top, , , left]
+      codeViewer: {
+        style: {
+          padding: [top, , , left]
+        }
       }
     } = this
 
@@ -91,7 +89,7 @@ export default class Renderer {
         this.translate(0, -y)
         break
       case Fixed.RIGHT:
-        // @todo
+        // @todo - fixed right
         break
       default:
         this.translate(-x, -y)
@@ -328,17 +326,6 @@ export default class Renderer {
     this.restore()
   }
 
-  drawBackground (color: Color, { width, height }: Size, radii = 0) {
-    const { ctx } = this
-    ctx.save()
-    ctx.beginPath()
-    ctx.fillStyle = color
-    ctx.roundRect(0, 0, width, height, radii)
-    ctx.fill()
-    ctx.closePath()
-    ctx.restore()
-  }
-
   // ---------- start scroll bar -----------
   drawScrollBar (
     type: ScrollBarType,
@@ -403,52 +390,6 @@ export default class Renderer {
     ctx.fillRect(0, scrollDistance, size, thumbLength)
   }
   // ---------- end scroll bar -----------
-
-  // /**
-  //  * get Mouse point current position
-  //  * @todo - row | lineNumber
-  //  * @returns btn-collapse | btn-copy | other
-  //  */
-  // getMousePosition ({ x, y }: Coordinate): 'btn-collapse' | 'btn-copy' | 'other' {
-  //   const {
-  //     codeViewer: {
-  //       headerBar
-  //     },
-  //     width
-  //   } = this
-
-  //   if (headerBar.visible) {
-  //     const {
-  //       style: {
-  //         padding: [top, right, , left]
-  //       }
-  //     } = headerBar
-  //     if (headerBar.canCopy) {
-  //       const [x1, y1, x2, y2] = [
-  //         width - right - DEFAULT_COPY_BUTTON.width,
-  //         top,
-  //         width - right,
-  //         top + DEFAULT_COPY_BUTTON.height
-  //       ]
-  //       if (x >= x1 && x <= x2 && y >= y1 && y <= y2) {
-  //         return 'btn-copy'
-  //       }
-  //     }
-  //     if (headerBar.collapsible) {
-  //       const [x1, y1, x2, y2] = [
-  //         left,
-  //         top,
-  //         left + DEFAULT_COLLAPSE_BUTTON.width,
-  //         top + DEFAULT_COLLAPSE_BUTTON.height
-  //       ]
-  //       if (x >= x1 && x <= x2 && y >= y1 && y <= y2) {
-  //         return 'btn-collapse'
-  //       }
-  //     }
-  //   }
-
-  //   return 'other'
-  // }
 
   translate (x: number, y: number) {
     this.ctx.translate(x, y)

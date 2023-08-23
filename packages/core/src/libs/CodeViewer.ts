@@ -2,8 +2,8 @@
  * Code Renderer
  */
 
-import { DEFAULT_LINE_NUMBER_STYLE, DEFAULT_STYLE, type Style, type ScopeStyles, DEFAULT_HEADER_BAR_STYLE, BTN_COPY_ID, BTN_COLLAPSE_ID } from '../config/defaultSetting'
-import { deepMergeObject, getMouseCoordinate, isEmptyObject, isString } from '../utils/tools'
+import { DEFAULT_LINE_NUMBER_STYLE, DEFAULT_STYLE, type ScopeStyles, DEFAULT_HEADER_BAR_STYLE, BTN_COPY_ID, BTN_COLLAPSE_ID } from '../config/defaultSetting'
+import { deepMergeObject, getMouseCoordinate, isString } from '../utils/tools'
 import Renderer from './Renderer'
 import { parseContent, parseHeaderBar } from './Parser'
 import ScrollBar, { ScrollBarType } from './ScrollBar'
@@ -38,7 +38,7 @@ export interface ViewerOptions {
 
   headerBarSetting?: HeaderBarSetting
 
-  // collapsed?: boolean
+  isCollapsed?: boolean
 }
 
 export default class CodeViewer {
@@ -65,8 +65,6 @@ export default class CodeViewer {
 
   displayLineNumber = true
   breakRow = true
-  /** is collapsed */
-  // collapsed = false
   copyState: 'Default' | 'Success' | 'Failure' = 'Default'
   scrollState: Coordinate = { x: 0, y: 0 }
 
@@ -93,30 +91,13 @@ export default class CodeViewer {
 
     this.setTheme(theme, options.themeMode)
 
-    this.updateBlocks()
+    this.#updateBlocks()
 
     this.renderer = new Renderer(
-      this.style,
       this,
       options.width,
       options.height
     )
-  }
-
-  get maxContentWidth () {
-    const {
-      width,
-      style: {
-        padding: [, right]
-      },
-      breakRow
-    } = this
-
-    if (!breakRow) {
-      return Infinity
-    }
-
-    return width - right
   }
 
   get viewportSize (): Size {
@@ -288,10 +269,10 @@ export default class CodeViewer {
     const allowScroll = horizontalScrollBar.isActive || verticalScrollBar.isActive
 
     if (allowScroll) {
-      renderer.canvas.addEventListener('wheel', this.handleMouseWheel)
+      renderer.canvas.addEventListener('wheel', this.#handleMouseWheel)
     }
 
-    renderer.canvas.addEventListener('click', this.handleClick)
+    renderer.canvas.addEventListener('click', this.#handleClick)
   }
 
   setTheme (theme: CodeViewerTheme, themeMode: 'light' | 'dark' = 'light'): CodeViewer {
@@ -322,41 +303,6 @@ export default class CodeViewer {
     }
   }
 
-  getScopeStyle (scope: keyof ScopeStyles): Required<Style> {
-    const { scopeStyles, style } = this
-
-    if (!scope) {
-      return style
-    }
-
-    const fullScopeStyle = scopeStyles[scope] as Required<Style>
-
-    if ((scope as string).includes('.')) {
-      const s = (scope as string).split('.').reduce<Style>((prev, key) => {
-        const s = scopeStyles[key as keyof ScopeStyles] as Required<Style>
-        if (s) {
-          Object.assign(prev, s)
-        }
-
-        return prev
-      }, {})
-
-      if (!isEmptyObject(fullScopeStyle)) {
-        Object.assign(s, fullScopeStyle)
-      }
-
-      return {
-        ...style,
-        ...s
-      }
-    }
-
-    return {
-      ...style,
-      ...fullScopeStyle
-    }
-  }
-
   update (content?: string, language?: string, resetScroll = true) {
     if (!this.#isMounted) {
       throw new Error('Make sure the `mount()` method is called first.')
@@ -369,8 +315,7 @@ export default class CodeViewer {
       this.language = language
     }
 
-    this.updateBlocks()
-    /** @todo */
+    this.#updateBlocks()
     this.#init(false)
 
     const {
@@ -383,10 +328,10 @@ export default class CodeViewer {
       verticalScrollBar.scroll(0)
     }
     this.render()
-    this.afterRender()
+    this.#afterRender()
   }
 
-  updateBlocks () {
+  #updateBlocks () {
     if (this.content) {
       const {
         width,
@@ -434,12 +379,12 @@ export default class CodeViewer {
     renderer.init(width, height)
 
     renderer.render(viewportBlocks)
-    this.afterRender()
+    this.#afterRender()
 
     return this
   }
 
-  afterRender () {
+  #afterRender () {
     const {
       horizontalScrollBar,
       verticalScrollBar
@@ -454,26 +399,22 @@ export default class CodeViewer {
     }
   }
 
-  execScroll ({ x, y }: Coordinate, behaviors: 'scroll' | 'scrollBy' = 'scroll') {
+  #execScroll ({ x, y }: Coordinate, behaviors: 'scroll' | 'scrollBy' = 'scroll') {
     const {
       horizontalScrollBar,
       verticalScrollBar
     } = this
 
-    if (horizontalScrollBar.isActive) {
-      x = horizontalScrollBar[behaviors](x)
-    } else {
-      x = 0
-    }
-    if (verticalScrollBar.isActive) {
-      y = verticalScrollBar[behaviors](y)
-    } else {
-      y = 0
-    }
+    this.#setState('scrollState', {
+      x: horizontalScrollBar.isActive
+        ? horizontalScrollBar[behaviors](x)
+        : 0,
+      y: verticalScrollBar.isActive
+        ? verticalScrollBar[behaviors](y)
+        : 0
+    })
 
-    this.#setState('scrollState', { x, y })
-
-    this.afterRender()
+    this.#afterRender()
   }
 
   resize (width: number, height: number) {
@@ -498,19 +439,19 @@ export default class CodeViewer {
     this.render()
   }
 
-  handleMouseWheel = (e: WheelEvent) => {
+  #handleMouseWheel = (e: WheelEvent) => {
     e.preventDefault()
 
     const x = e.deltaX * 0.1
     const y = e.deltaY * 0.1
 
-    this.execScroll({
+    this.#execScroll({
       x,
       y
     }, 'scrollBy')
   }
 
-  handleClick = (e: MouseEvent) => {
+  #handleClick = (e: MouseEvent) => {
     const { x, y } = getMouseCoordinate(e)
 
     if (this.headerBarSetting.visible) {
@@ -530,7 +471,7 @@ export default class CodeViewer {
         midY + copyBtn.y + copyBtn.height / 2 >= y
       ) {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.handleCopy()
+        this.#handleCopy()
       } else if (
         collapseBtn &&
         midX + collapseBtn.x - collapseBtn.width / 2 <= x &&
@@ -538,14 +479,12 @@ export default class CodeViewer {
         midY + collapseBtn.y - collapseBtn.height / 2 <= y &&
         midY + collapseBtn.y + collapseBtn.height / 2 >= y
       ) {
-        this.toggleCollapse()
-      } else {
-        // Click other blocks
+        this.#toggleCollapse()
       }
     }
   }
 
-  async handleCopy () {
+  async #handleCopy () {
     if (this.copyState !== 'Default') {
       return
     }
@@ -565,7 +504,7 @@ export default class CodeViewer {
     }
   }
 
-  toggleCollapse () {
+  #toggleCollapse () {
     this.#setState('isCollapsed', !this.isCollapsed)
   }
 
@@ -584,14 +523,12 @@ export default class CodeViewer {
       const { width, height } = parentElement.getBoundingClientRect()
 
       renderer.init(width, height)
-
-      this.width = width
-      this.height = height
+      Object.assign(this, { width, height })
     }
 
     // try parse content again
     if (this.#blocks.length === 0 && this.content) {
-      this.updateBlocks()
+      this.#updateBlocks()
     }
 
     parentElement.appendChild(renderer.canvas)
@@ -604,6 +541,11 @@ export default class CodeViewer {
   }
 
   unmount () {
-    this.renderer.canvas.remove()
+    const { renderer } = this
+
+    renderer.canvas.removeEventListener('wheel', this.#handleMouseWheel)
+    renderer.canvas.removeEventListener('click', this.#handleClick)
+
+    renderer.canvas.remove()
   }
 }

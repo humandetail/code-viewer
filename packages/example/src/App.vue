@@ -61,7 +61,8 @@ const cv = new CodeViewer({
     collapsible: true,
     displayLanguage: true,
     copyable: true
-  }
+  },
+  isCollapsed: true
 }, {
   style: {
     borderRadius: 8,
