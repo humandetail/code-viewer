@@ -1,10 +1,26 @@
 # Code Viewer
 
-<p style="display: flex; justify-content: center;">
-  <svg width="108" height="108" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="code-viewer-gradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="5%" stop-color="#FFC988" /><stop offset="95%" stop-color="#FFAC81" /></linearGradient></defs><line x1="384" y1="324" x2="256" y2="192" stroke-width="48" stroke-linecap="round" stroke="#FFC988" /><line x1="640" y1="324" x2="768" y2="192" stroke-width="48" stroke-linecap="round" stroke="#FFAC81" /><rect x="128" y="324" width="768" height="512" rx="64" fill="none" stroke-width="48" stroke="url('#code-viewer-gradient')" /><g stroke="#FFAC81"><g><line x1="256" y1="580" x2="384" y2="580" stroke-width="48" stroke-linecap="round" transform="rotate(-30,256,580)" /></g><g><line x1="256" y1="580" x2="384" y2="580" stroke-width="48" stroke-linecap="round" transform="rotate(30,256,580)" /></g></g><g stroke="#FFC988" transform="rotate(180,512,580)"><g><line x1="256" y1="580" x2="384" y2="580" stroke-width="48" stroke-linecap="round" transform="rotate(-30,256,580)" /></g><g><line x1="256" y1="580" x2="384" y2="580" stroke-width="48" stroke-linecap="round" transform="rotate(30,256,580)" /></g></g><rect x="488" y="384" width="48" height="384" rx="24" fill="url('#code-viewer-gradient')" transform="rotate(36,488,580)" /></svg>
-</p>
+<center>
+  <img src="https://humandetail.github.io/code-viewer/code-viewer.svg" width="108" height="108" />
+</center>
 
-<p style="display: flex; justify-content: center; flex-wrap: wrap; gap: 8px;">
+<center>
+  <a href="https://www.npmjs.com/package/@humandetail/code-viewer">
+    <img src="https://img.shields.io/npm/v/@humandetail/code-viewer.svg" />
+  </a>
+  <a href="https://github.com/humandetail/code-viewer/actions/workflows/ci.yaml">
+    <img src="https://github.com/humandetail/code-viewer/actions/workflows/ci.yaml/badge.svg?branch=main" />
+  </a>
+  <a href="https://github.com/humandetail/code-viewer/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/humandetail/code-viewer.svg" />
+  </a>
+  <a href="https://github.com/humandetail/code-viewer/issues">
+    <img src="https://img.shields.io/github/issues/humandetail/code-viewer.svg" />
+  </a>
+  <a href="https://github.com/humandetail/code-viewer">
+    <img src="https://img.shields.io/github/stars/humandetail/code-viewer.svg" />
+  </a>
+</center>
   <a href="https://www.npmjs.com/package/@humandetail/code-viewer">
     <img src="https://img.shields.io/npm/v/@humandetail/code-viewer.svg" />
   </a>
