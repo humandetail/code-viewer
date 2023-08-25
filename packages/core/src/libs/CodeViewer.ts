@@ -303,6 +303,14 @@ export default class CodeViewer {
     }
   }
 
+  reset (options: ViewerOptions = {}, theme: CodeViewerTheme = options.themeMode === 'dark' ? darkTheme : lightTheme) {
+    deepMergeObject(this, options)
+
+    this.setTheme(theme, options.themeMode)
+
+    this.update()
+  }
+
   update (content?: string, language?: string, resetScroll = true) {
     if (!this.#isMounted) {
       throw new Error('Make sure the `mount()` method is called first.')

@@ -1,10 +1,10 @@
 # Code Viewer
 
-<center>
+<p align="center">
   <img src="https://humandetail.github.io/code-viewer/code-viewer.svg" width="108" height="108" />
-</center>
+</p>
 
-<center>
+<p align="center">
   <a href="https://www.npmjs.com/package/@humandetail/code-viewer">
     <img src="https://img.shields.io/npm/v/@humandetail/code-viewer.svg" />
   </a>
@@ -20,7 +20,7 @@
   <a href="https://github.com/humandetail/code-viewer">
     <img src="https://img.shields.io/github/stars/humandetail/code-viewer.svg" />
   </a>
-</center>
+</p>
   <a href="https://www.npmjs.com/package/@humandetail/code-viewer">
     <img src="https://img.shields.io/npm/v/@humandetail/code-viewer.svg" />
   </a>
@@ -105,6 +105,8 @@ cv.mount(document.querySelector('#container'))
 ## API
 
 - `setTheme(theme: CodeViewerTheme, themeMode?: 'light' | 'dark'): CodeViewer`
+
+- `reset(options?: ViewerOptions, them?: CodeViewerTheme): void`
 
 - `update(content?: string, language?: string, resetScroll?: boolean): void`
 
