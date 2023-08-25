@@ -76,7 +76,7 @@ const handleStartBtnClick = () => {
   left: 0;
   width: 100vw;
   height: 100vh;
-  animation: 2s ease 0.1s forwards scale;
+  animation: 1.5s ease 0.1s forwards scale;
 }
 .cat-logo-mask {
   position: absolute;
