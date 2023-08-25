@@ -1,4 +1,5 @@
 <template>
+  <c-a-t />
   <div
     class="code-viewer-container"
     :class="[
@@ -28,6 +29,8 @@
 import { ref, onMounted, provide, reactive, watch } from 'vue'
 import { CodeViewer, type ViewerOptions } from '@humandetail/code-viewer'
 import { ThemeMode } from './types'
+
+import CAT from './components/CAT.vue'
 
 import PageHeader from './components/header/index.vue'
 import SettingWrapper from './components/settings/index.vue'
