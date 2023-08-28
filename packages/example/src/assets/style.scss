@@ -17,6 +17,8 @@ body {
   --light-bg: #f6f6f6;
   --dark-bg: #666;
   --white: #fff;
+  --input: #f2f3f5;
+  --switch: #e8eaed;
   --black: #444;
 
   &.dark {
@@ -27,7 +29,9 @@ body {
     --border-color: #bebebe;
     --light-bg: #666;
     --dark-bg: #f6f6f6;
-    --white: #444;
+    --white: #222;
+    --switch: #444;
+    --input: #444;
     --black: #fff;
   }
 }

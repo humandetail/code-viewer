@@ -33,7 +33,7 @@ const handleClick = () => {
   height: 20px;
   padding: 2px;
   border-radius: 10px;
-  background-color: var(--border-color);
+  background-color: var(--switch);
   box-sizing: border-box;
   cursor: pointer;
 
@@ -45,7 +45,7 @@ const handleClick = () => {
     background-color: #fff;
     transition: .1s linear;
   }
-  
+
   &.checked {
     background-color: var(--brand-color);
 

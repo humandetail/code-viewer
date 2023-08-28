@@ -62,10 +62,11 @@ const handleCollapseBtnClick = () => {
         transform: translateY(-50%) rotate(45deg);
       }
 
-      &:hover {
-        &::before {
-          background-color: var(--brand-color);
-        }
+    }
+
+    &:hover {
+      .title::before {
+        background-color: var(--brand-color);
       }
     }
 
@@ -125,15 +126,17 @@ const handleCollapseBtnClick = () => {
         height: calc(100% - 16px);
         min-height: 120px;
         line-height: 1.6;
-        padding: 16px;
-        border: 1px solid var(--border-color);
+        padding: 8px 14px;
         border-radius: 4px;
-        background-color: var(--white);
+        background-color: var(--input);
+        outline: 1px solid transparent;
         box-sizing: border-box;
+        transition: all .2s;
         resize: none;
 
         &:focus {
-          outline: 1px solid var(--brand-color);
+          outline-color: var(--brand-color);
+          background-color: var(--white)
         }
 
         &:focus,

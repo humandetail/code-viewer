@@ -40,16 +40,17 @@ const handleBlur = (e: Event) => {
 .input-number {
   .input {
     all: unset;
-    min-width: 100px;
+    min-width: 180px;
     width: fit-content;
-    height: 24px;
+    height: 28px;
     padding: 0 8px;
-    border: 1px solid var(--border-color);
     border-radius: 4px;
-    background-color: var(--white);
+    background-color: var(--input);
     box-sizing: border-box;
+    font-size: 14px;
 
     &:focus {
+      background-color: var(--white);
       outline: 1px solid var(--brand-color);
     }
 

@@ -56,17 +56,18 @@ const handleChange = (e: Event) => {
 
   .select {
     all: unset;
-    min-width: 120px;
+    min-width: 180px;
     width: max-content;
-    height: 24px;
-    line-height: 24px;
+    height: 28px;
+    line-height: 28px;
     padding: 0 8px;
-    border: 1px solid var(--border-color);
     border-radius: 4px;
-    background-color: var(--white);
+    background-color: var(--input);
     box-sizing: border-box;
+    font-size: 14px;
 
     &:focus {
+      background-color: var(--white);
       outline: 1px solid var(--brand-color);
     }
 
@@ -80,13 +81,13 @@ const handleChange = (e: Event) => {
     position: absolute;
     right: 0;
     top: 0;
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     transition: .1s linear;
 
     .icon {
-      width: 24px;
-      height: 24px;
+      width: 100%;
+      height: 100%;
       fill: var(--border-color);
     }
   }
